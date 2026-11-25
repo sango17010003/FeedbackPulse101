@@ -219,15 +219,27 @@ function HomePage({ onOpenSerial, onOpenDash, darkMode }) {
   );
 }
 
-/* ==================== 2. GUEST RATING PAGE (WITH TURNSTILE) ==================== */
+/* ==================== 2. GUEST RATING PAGE (3x 5-STAR SURVEY + AI REVIEW HELPER) ==================== */
 function GuestRatingPage({ slug, darkMode }) {
   const [stand, setStand] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [score, setScore] = useState(null);
-  const [note, setNote] = useState('');
+
+  // 3 Survey Questions (each 1-5 stars, total out of 15)
+  const [q1, setQ1] = useState(0); // Product / Food / Service Quality
+  const [q2, setQ2] = useState(0); // Staff Behavior & Speed
+  const [q3, setQ3] = useState(0); // Cleanliness & Overall Value
+
+  // AI-Assisted Review Text Box & Presets
+  const [reviewText, setReviewText] = useState('');
+  const [selectedPresetIdx, setSelectedPresetIdx] = useState(null);
+  const [copiedToast, setCopiedToast] = useState(false);
+
+  // Low-rating resolution page state (total < 7 out of 15)
   const [contact, setContact] = useState('');
+  const [lowScorePage, setLowScorePage] = useState(false);
+  const [privateSaved, setPrivateSaved] = useState(false);
+
   const [captchaToken, setCaptchaToken] = useState('');
-  const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -245,42 +257,94 @@ function GuestRatingPage({ slug, darkMode }) {
     if (slug) loadStand();
   }, [slug]);
 
-  const submitFeedback = async (selectedScore, isHigh) => {
-    if (TURNSTILE_SITE_KEY && !captchaToken) {
-      setErrorMsg('Please complete the human verification check below first.');
+  const totalStars = q1 + q2 + q3;
+  const allAnswered = q1 > 0 && q2 > 0 && q3 > 0;
+
+  const getAiPresets = (bizName, loc) => [
+    `Had a wonderful experience at ${bizName}${loc ? ` (${loc})` : ''}! Top-notch quality, polite staff, and great hygiene. Highly recommended!`,
+    `Really impressed by the service and friendliness of the team at ${bizName}. Everything was smooth, clean, and worth every rupee!`,
+    `One of the best places to visit! ${bizName} delivers consistently great quality and warm hospitality. Will definitely come back again.`,
+    `Quick service, welcoming atmosphere, and genuine care for customers at ${bizName}. Five stars all the way!`,
+  ];
+
+  const handleSelectPreset = async (text, idx) => {
+    setSelectedPresetIdx(idx);
+    setReviewText(text);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedToast(true);
+      setTimeout(() => setCopiedToast(false), 3000);
+    } catch {}
+  };
+
+  const copyReviewToClipboard = async (text) => {
+    if (!text.trim()) return;
+    try {
+      await navigator.clipboard.writeText(text.trim());
+      setCopiedToast(true);
+    } catch {}
+  };
+
+  const handleSurveySubmit = async (e) => {
+    e.preventDefault();
+    if (!allAnswered) {
+      setErrorMsg('Please rate all 3 questions before continuing.');
       return;
     }
+    if (TURNSTILE_SITE_KEY && !captchaToken) {
+      setErrorMsg('Please complete the human verification check first.');
+      return;
+    }
+
     setSubmitting(true);
     setErrorMsg('');
+
+    const isLowScore = totalStars < 7; // Less than 7 out of 15
+    const breakdownSummary = `[Q1:${q1}/5, Q2:${q2}/5, Q3:${q3}/5 | Total:${totalStars}/15] ${reviewText.trim()}`;
+
     const { error } = await supabase.from('feedback_logs').insert({
       stand_id: stand.id,
-      rating_score: selectedScore,
-      feedback_text: note.trim().slice(0, 1000) || null,
+      rating_score: totalStars,
+      feedback_text: breakdownSummary.slice(0, 1000),
       customer_contact: contact.trim().slice(0, 120) || null,
-      routed_to_google: isHigh,
+      routed_to_google: !isLowScore,
     });
+
     setSubmitting(false);
 
     if (error) {
-      setErrorMsg(error.message.includes('Rate limit') ? 'Too many submissions. Please wait a few minutes.' : 'Unable to submit feedback right now.');
+      setErrorMsg(error.message.includes('Rate limit') ? 'Too many submissions. Please try again shortly.' : 'Unable to submit feedback right now.');
       return;
     }
 
-    if (isHigh && stand.google_review_url) {
-      window.location.href = stand.google_review_url;
+    if (isLowScore) {
+      // Total < 7 out of 15 -> Take user to Thank You + Optional Google Maps button page
+      setLowScorePage(true);
     } else {
-      setSubmitted(true);
+      // Total >= 7 out of 15 -> Auto-copy review message & redirect to Google Reviews
+      await copyReviewToClipboard(reviewText);
+      if (stand.google_review_url) {
+        setTimeout(() => {
+          window.location.href = stand.google_review_url;
+        }, 700);
+      }
     }
   };
 
-  const handleScoreSelect = (num) => {
-    setScore(num);
-    if (num >= 8) {
-      submitFeedback(num, true);
-    }
+  const saveFollowUpContact = async (e) => {
+    e.preventDefault();
+    if (!contact.trim()) return;
+    await supabase.from('feedback_logs').insert({
+      stand_id: stand.id,
+      rating_score: totalStars || 1,
+      feedback_text: `[Follow-up Request | Total:${totalStars}/15] ${reviewText.trim()}`.slice(0, 1000),
+      customer_contact: contact.trim().slice(0, 120),
+      routed_to_google: false,
+    });
+    setPrivateSaved(true);
   };
 
-  if (loading) return <div className="py-20 text-center text-sm text-slate-500">Loading stand...</div>;
+  if (loading) return <div className="py-20 text-center text-sm text-slate-500">Loading survey...</div>;
   if (!stand || !stand.is_active) {
     return (
       <div className="max-w-md mx-auto my-16 p-8 rounded-2xl bg-white border border-slate-200 text-center space-y-2">
@@ -291,15 +355,160 @@ function GuestRatingPage({ slug, darkMode }) {
     );
   }
 
+  const questions = [
+    { label: '1. Quality of Product / Service', value: q1, setter: setQ1 },
+    { label: '2. Staff Behavior & Speed', value: q2, setter: setQ2 },
+    { label: '3. Cleanliness & Overall Value', value: q3, setter: setQ3 },
+  ];
+
+  const presets = getAiPresets(stand.business_name, stand.location_label);
+
+  // PAGE B: Dedicated "Thank You for Your Visit" Page when Total Stars < 7 out of 15
+  if (lowScorePage) {
+    return (
+      <div className="max-w-md mx-auto my-10 px-4">
+        <div className={darkMode ? 'p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-5' : 'p-8 rounded-2xl bg-white border border-slate-200 shadow-sm text-center space-y-5'}>
+          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-7 h-7" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-xl font-extrabold">Thank You for Your Visit!</h1>
+            <p className={darkMode ? 'text-xs sm:text-sm text-slate-300 leading-relaxed' : 'text-xs sm:text-sm text-slate-600 leading-relaxed'}>
+              We truly appreciate your honest review for <strong>{stand.business_name}</strong> ({totalStars}/15 stars). Your feedback has been shared directly with the owner so we can improve your next experience.
+            </p>
+          </div>
+
+          {!privateSaved ? (
+            <form onSubmit={saveFollowUpContact} className="space-y-2.5 text-left pt-2 border-t border-slate-100">
+              <label className="block text-xs font-semibold text-slate-500">Want the manager to reach out to resolve this? (Optional)</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  maxLength={120}
+                  value={contact}
+                  onChange={(e) => setContact(e.target.value)}
+                  placeholder="Phone or Email"
+                  className="flex-1 px-3.5 py-2 rounded-xl border border-slate-300 text-xs text-slate-900"
+                />
+                <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold">
+                  Send
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold">
+              Contact shared with management. Thank you!
+            </div>
+          )}
+
+          {stand.google_review_url && (
+            <div className="pt-3 border-t border-slate-100 space-y-2">
+              <p className="text-[11px] text-slate-400">Prefer to post publicly as well?</p>
+              <a
+                href={stand.google_review_url}
+                onClick={() => copyReviewToClipboard(reviewText)}
+                className={darkMode ? 'w-full py-2.5 px-4 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-2' : 'w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center justify-center gap-2'}
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Write on Google Maps
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // PAGE A: 3-Question 5-Star Survey + AI Review Preset Box
   return (
-    <div className="max-w-md mx-auto my-10 px-4">
-      <div className={darkMode ? 'p-7 rounded-2xl bg-slate-900 border border-slate-800 space-y-5' : 'p-7 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5'}>
+    <div className="max-w-lg mx-auto my-8 px-4">
+      <form onSubmit={handleSurveySubmit} className={darkMode ? 'p-6 sm:p-8 rounded-2xl bg-slate-900 border border-slate-800 space-y-5' : 'p-6 sm:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5'}>
         <div className="text-center space-y-1">
           <span className="text-[11px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-semibold">
             {stand.stand_slug} {stand.location_label ? `• ${stand.location_label}` : ''}
           </span>
           <h1 className="text-xl font-extrabold pt-1">{stand.business_name}</h1>
-          <p className="text-xs text-slate-500">How was your experience with us today? (1 = Poor, 10 = Outstanding)</p>
+          <p className="text-xs text-slate-500">Rate 3 quick questions below ({totalStars}/15 Stars)</p>
+        </div>
+
+        {/* 3 Survey Questions with 5 Stars Each */}
+        <div className="space-y-3">
+          {questions.map((q, idx) => (
+            <div key={idx} className={darkMode ? 'p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2' : 'p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2'}>
+              <span className="text-xs sm:text-sm font-semibold">{q.label}</span>
+              <div className="flex items-center gap-1 shrink-0">
+                {[1, 2, 3, 4, 5].map((starNum) => (
+                  <button
+                    key={starNum}
+                    type="button"
+                    onClick={() => q.setter(starNum)}
+                    className="p-0.5 transition transform hover:scale-110"
+                    aria-label={`${starNum} stars`}
+                  >
+                    <Star
+                      className={`w-6 h-6 ${
+                        starNum <= q.value
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-slate-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* AI-Enabled Appreciation Presets + Auto-Copied Review Text Box */}
+        <div className="space-y-2.5 pt-1">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold flex items-center gap-1.5 text-indigo-600">
+              <Sparkles className="w-3.5 h-3.5" /> AI Quick-Write Suggestions (Tap to Auto-Fill & Copy)
+            </label>
+            {copiedToast && (
+              <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
+                <Check className="w-3 h-3" /> Copied to Clipboard!
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-1.5">
+            {presets.map((preset, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleSelectPreset(preset, idx)}
+                className={`text-left p-2.5 rounded-xl border text-xs transition ${
+                  selectedPresetIdx === idx
+                    ? 'border-indigo-600 bg-indigo-50 text-indigo-950 font-medium'
+                    : darkMode
+                    ? 'border-slate-800 bg-slate-950 text-slate-300 hover:border-indigo-500'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-400'
+                }`}
+              >
+                “{preset}”
+              </button>
+            ))}
+          </div>
+
+          <div className="relative pt-1">
+            <textarea
+              rows={3}
+              maxLength={1000}
+              value={reviewText}
+              onChange={(e) => { setReviewText(e.target.value); setSelectedPresetIdx(null); }}
+              placeholder="Tap any AI suggestion above or write your review here (auto-copied for Google Reviews)..."
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900"
+            />
+            {reviewText.trim() && (
+              <button
+                type="button"
+                onClick={() => copyReviewToClipboard(reviewText)}
+                className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:underline"
+              >
+                <Copy className="w-3 h-3" /> Copy text again
+              </button>
+            )}
+          </div>
         </div>
 
         <TurnstileWidget onVerify={setCaptchaToken} />
@@ -308,69 +517,26 @@ function GuestRatingPage({ slug, darkMode }) {
           <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-medium text-center">{errorMsg}</div>
         )}
 
-        {submitted ? (
-          <div className="p-5 rounded-xl bg-emerald-50 text-emerald-800 text-center space-y-1">
-            <CheckCircle2 className="w-7 h-7 mx-auto text-emerald-600" />
-            <p className="font-bold text-sm">Thank you for your feedback!</p>
-            <p className="text-xs">Your note has been sent directly to the management team.</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-5 gap-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                <button
-                  key={num}
-                  type="button"
-                  disabled={submitting}
-                  onClick={() => handleScoreSelect(num)}
-                  className={`py-3 rounded-xl font-bold text-sm border transition ${
-                    score === num
-                      ? 'bg-indigo-600 text-white border-indigo-600'
-                      : num >= 8
-                      ? 'border-emerald-200 bg-emerald-50/60 text-emerald-800 hover:bg-emerald-100'
-                      : 'border-slate-200 hover:border-indigo-400'
-                  }`}
-                >
-                  {num}
-                </button>
-              ))}
-            </div>
+        <button
+          type="submit"
+          disabled={submitting || !allAnswered}
+          className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-xs disabled:opacity-50"
+        >
+          {submitting
+            ? 'Submitting...'
+            : !allAnswered
+            ? 'Rate All 3 Questions to Continue'
+            : totalStars < 7
+            ? 'Submit Feedback'
+            : 'Copy Review & Continue to Google Maps'}
+        </button>
 
-            {score !== null && score < 8 && (
-              <form
-                onSubmit={(e) => { e.preventDefault(); submitFeedback(score, false); }}
-                className="space-y-3 pt-2 border-t border-slate-100"
-              >
-                <p className="text-xs font-semibold text-slate-700">We want to make this right. Tell the owner what happened:</p>
-                <textarea
-                  rows={3}
-                  required
-                  maxLength={1000}
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="Share details so we can improve..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900"
-                />
-                <input
-                  type="text"
-                  maxLength={120}
-                  value={contact}
-                  onChange={(e) => setContact(e.target.value)}
-                  placeholder="Phone or Email (optional, for follow-up)"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900"
-                />
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm disabled:opacity-60"
-                >
-                  {submitting ? 'Sending...' : 'Send Private Feedback'}
-                </button>
-              </form>
-            )}
-          </>
+        {allAnswered && totalStars >= 7 && (
+          <p className="text-[11px] text-center text-slate-400">
+            Your message is automatically copied—just long-press and tap <strong>Paste</strong> inside Google Reviews!
+          </p>
         )}
-      </div>
+      </form>
     </div>
   );
 }
