@@ -331,9 +331,20 @@ function GuestRatingPage({ slug, darkMode }) {
     }
   };
 
+  const closePageSafely = () => {
+    try {
+      window.open('', '_self');
+      window.close();
+    } catch {}
+    setPrivateSaved(true);
+  };
+
   const saveFollowUpContact = async (e) => {
     e.preventDefault();
-    if (!contact.trim()) return;
+    if (!contact.trim()) {
+      closePageSafely();
+      return;
+    }
     await supabase.from('feedback_logs').insert({
       stand_id: stand.id,
       rating_score: totalStars || 1,
@@ -342,7 +353,11 @@ function GuestRatingPage({ slug, darkMode }) {
       routed_to_google: false,
     });
     setPrivateSaved(true);
+    setTimeout(() => {
+      closePageSafely();
+    }, 1500);
   };
+
 
   if (loading) return <div className="py-20 text-center text-sm text-slate-500">Loading survey...</div>;
   if (!stand || !stand.is_active) {
@@ -368,7 +383,7 @@ function GuestRatingPage({ slug, darkMode }) {
     return (
       <div className="max-w-md mx-auto my-10 px-4">
         <div className={darkMode ? 'p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-5' : 'p-8 rounded-2xl bg-white border border-slate-200 shadow-sm text-center space-y-5'}>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-7 h-7" />
           </div>
           <div className="space-y-2">
@@ -396,27 +411,38 @@ function GuestRatingPage({ slug, darkMode }) {
               </div>
             </form>
           ) : (
-            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold">
-              Contact shared with management. Thank you!
+            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold">
+              Feedback saved! You may now safely close this page.
             </div>
           )}
 
-          {stand.google_review_url && (
-            <div className="pt-3 border-t border-slate-100 space-y-2">
-              <p className="text-[11px] text-slate-400">Prefer to post publicly as well?</p>
-              <a
-                href={stand.google_review_url}
-                onClick={() => copyReviewToClipboard(reviewText)}
-                className={darkMode ? 'w-full py-2.5 px-4 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-2' : 'w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center justify-center gap-2'}
-              >
-                <ExternalLink className="w-3.5 h-3.5" /> Write on Google Maps
-              </a>
-            </div>
-          )}
+          <div className="pt-3 border-t border-slate-100 space-y-2.5">
+            {stand.google_review_url && (
+              <>
+                <p className="text-[11px] text-slate-400">Prefer to post publicly as well?</p>
+                <a
+                  href={stand.google_review_url}
+                  onClick={() => copyReviewToClipboard(reviewText)}
+                  className={darkMode ? 'w-full py-2.5 px-4 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-200 text-xs font-semibold inline-flex items-center justify-center gap-2' : 'w-full py-2.5 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center justify-center gap-2'}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" /> Write on Google Maps
+                </a>
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={closePageSafely}
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold"
+            >
+              Done & Close Page
+            </button>
+          </div>
         </div>
       </div>
     );
   }
+
 
   // PAGE A: 3-Question 5-Star Survey + AI Review Preset Box
   return (
