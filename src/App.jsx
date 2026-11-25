@@ -58,10 +58,9 @@ export default function App() {
   const [route, setRoute] = useState('home');
   const [standParam, setStandParam] = useState('');
   const [session, setSession] = useState(null);
-  const [lightGlass, setLightGlass] = useState(false);
+  const [lightGlass, setLightGlass] = useState(true); // High-contrast Light Frosted Glass by default
   const [legalModal, setLegalModal] = useState(null);
 
-  // Zero-Tracker Consent Banner State (blocks non-essential storage until user chooses)
   const [trackerChoice, setTrackerChoice] = useState(() => {
     try { return localStorage.getItem('fp101_tracker_consent') || ''; } catch { return ''; }
   });
@@ -110,25 +109,33 @@ export default function App() {
     navigate('home');
   };
 
+  // High-contrast accessible tokens for both Light Glass and Dark Glass modes
   const theme = {
     lightGlass,
     card: lightGlass
-      ? 'rounded-3xl border border-white/60 bg-white/80 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.28)] text-stone-900'
-      : 'rounded-3xl border border-white/20 bg-stone-900/55 backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.65)] text-white',
+      ? 'rounded-3xl border border-white/80 bg-white/92 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.28)] text-stone-900'
+      : 'rounded-3xl border border-white/25 bg-stone-950/82 backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.75)] text-white',
     subCard: lightGlass
-      ? 'rounded-2xl border border-stone-200/80 bg-white/70 backdrop-blur-md text-stone-900'
-      : 'rounded-2xl border border-white/15 bg-white/10 backdrop-blur-md text-white',
+      ? 'rounded-2xl border border-stone-200 bg-stone-50/95 text-stone-900'
+      : 'rounded-2xl border border-white/20 bg-stone-900/85 text-white',
     input: lightGlass
-      ? 'w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white/90 text-stone-900 placeholder-stone-400 text-sm focus:outline-none focus:border-amber-500'
-      : 'w-full px-3.5 py-2.5 rounded-xl border border-white/20 bg-white/12 text-white placeholder-white/50 text-sm focus:outline-none focus:border-amber-300 focus:bg-white/18',
+      ? 'w-full px-3.5 py-2.5 rounded-xl border border-stone-300 !bg-white !text-stone-900 placeholder-stone-400 text-sm focus:outline-none focus:border-amber-600'
+      : 'w-full px-3.5 py-2.5 rounded-xl border border-white/25 !bg-stone-900/95 !text-white placeholder-white/55 text-sm focus:outline-none focus:border-amber-300',
     select: lightGlass
-      ? 'px-3 py-2 rounded-xl border border-stone-300 bg-white text-stone-900 text-xs font-semibold'
-      : 'px-3 py-2 rounded-xl border border-white/20 bg-stone-900/90 text-white text-xs font-semibold',
-    muted: lightGlass ? 'text-stone-600' : 'text-white/70',
+      ? 'px-3 py-2 rounded-xl border border-stone-300 !bg-white !text-stone-900 text-xs font-semibold'
+      : 'px-3 py-2 rounded-xl border border-white/25 !bg-stone-900 !text-white text-xs font-semibold',
+    muted: lightGlass ? 'text-stone-600' : 'text-stone-300',
     primaryBtn: lightGlass
-      ? 'bg-amber-500 hover:bg-amber-600 text-stone-950 font-bold shadow-md transition'
-      : 'bg-white hover:bg-amber-50 text-stone-950 font-bold shadow-lg transition',
-    accentText: lightGlass ? 'text-amber-600' : 'text-amber-300',
+      ? 'bg-amber-500 hover:bg-amber-600 text-stone-950 font-extrabold shadow-md transition'
+      : 'bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold shadow-lg transition',
+    accentText: lightGlass ? 'text-amber-700' : 'text-amber-300',
+    dangerTitle: lightGlass ? 'text-rose-700' : 'text-rose-300',
+    dangerBtn: lightGlass
+      ? 'border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold'
+      : 'border border-rose-400/40 bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 font-bold',
+    badgePill: lightGlass
+      ? 'bg-amber-100 border border-amber-300 text-amber-900'
+      : 'bg-amber-400/20 border border-amber-300/30 text-amber-200',
   };
 
   return (
@@ -142,7 +149,7 @@ export default function App() {
       <div
         className={
           lightGlass
-            ? 'fixed inset-0 bg-gradient-to-b from-stone-900/45 via-amber-950/35 to-stone-950/55 backdrop-blur-[4px] pointer-events-none z-0'
+            ? 'fixed inset-0 bg-gradient-to-b from-stone-950/45 via-amber-950/35 to-stone-950/55 backdrop-blur-[4px] pointer-events-none z-0'
             : 'fixed inset-0 bg-gradient-to-b from-stone-950/75 via-stone-900/65 to-black/80 backdrop-blur-[4px] pointer-events-none z-0'
         }
       />
@@ -150,8 +157,8 @@ export default function App() {
       <header
         className={
           lightGlass
-            ? 'sticky top-0 z-40 border-b border-white/40 bg-white/75 backdrop-blur-2xl text-stone-900'
-            : 'sticky top-0 z-40 border-b border-white/15 bg-stone-950/55 backdrop-blur-2xl text-white'
+            ? 'sticky top-0 z-40 border-b border-stone-200/80 bg-white/90 backdrop-blur-2xl text-stone-900'
+            : 'sticky top-0 z-40 border-b border-white/15 bg-stone-950/80 backdrop-blur-2xl text-white'
         }
       >
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -168,11 +175,11 @@ export default function App() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => setLightGlass(!lightGlass)}
-              title="Switch Frosted Glass Contrast"
+              title="Switch Light / Dark Frosted Glass"
               className={
                 lightGlass
-                  ? 'p-2 rounded-xl border border-stone-300/80 bg-white/80 text-stone-700 hover:bg-white'
-                  : 'p-2 rounded-xl border border-white/20 bg-white/10 text-amber-300 hover:bg-white/20'
+                  ? 'p-2 rounded-xl border border-stone-300 bg-white text-stone-800 hover:bg-stone-100'
+                  : 'p-2 rounded-xl border border-white/25 bg-stone-900 text-amber-300 hover:bg-stone-800'
               }
             >
               {lightGlass ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
@@ -188,8 +195,8 @@ export default function App() {
                   title="Sign Out"
                   className={
                     lightGlass
-                      ? 'p-2 rounded-xl border border-stone-300/80 bg-white/80 text-stone-700 hover:bg-white'
-                      : 'p-2 rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white/20'
+                      ? 'p-2 rounded-xl border border-stone-300 bg-white text-stone-800 hover:bg-stone-100'
+                      : 'p-2 rounded-xl border border-white/25 bg-stone-900 text-white hover:bg-stone-800'
                   }
                 >
                   <LogOut className="w-4 h-4" />
@@ -210,7 +217,6 @@ export default function App() {
         {route === 'dashboard' && <DashboardRouter session={session} theme={theme} onOpenLegal={setLegalModal} />}
       </main>
 
-      {/* Symmetrical Zero-Tracker Consent Banner (Reject is equally prominent as Accept) */}
       {!trackerChoice && (
         <div className="fixed bottom-4 inset-x-4 z-50 max-w-3xl mx-auto">
           <div className={`p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${theme.card}`}>
@@ -226,7 +232,11 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => handleTrackerDecision('REJECTED_NON_ESSENTIAL')}
-                className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-white/30 bg-white/15 hover:bg-white/25 text-xs font-bold transition"
+                className={
+                  lightGlass
+                    ? 'flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-stone-300 bg-stone-100 hover:bg-stone-200 text-stone-900 text-xs font-bold transition'
+                    : 'flex-1 sm:flex-initial px-4 py-2.5 rounded-xl border border-white/30 bg-white/15 hover:bg-white/25 text-white text-xs font-bold transition'
+                }
               >
                 Reject Non-Essential
               </button>
@@ -245,15 +255,15 @@ export default function App() {
       <footer
         className={
           lightGlass
-            ? 'relative z-10 border-t border-white/40 bg-white/75 backdrop-blur-2xl py-7 px-4 text-center text-xs text-stone-700 space-y-2.5'
-            : 'relative z-10 border-t border-white/15 bg-stone-950/55 backdrop-blur-2xl py-7 px-4 text-center text-xs text-white/70 space-y-2.5'
+            ? 'relative z-10 border-t border-stone-200/80 bg-white/90 backdrop-blur-2xl py-7 px-4 text-center text-xs text-stone-700 space-y-2.5'
+            : 'relative z-10 border-t border-white/15 bg-stone-950/80 backdrop-blur-2xl py-7 px-4 text-center text-xs text-stone-300 space-y-2.5'
         }
       >
-        <div className="flex flex-wrap justify-center gap-6 font-medium">
-          <button onClick={() => setLegalModal('terms')} className="hover:text-amber-400 transition">Terms &amp; Conditions</button>
-          <button onClick={() => setLegalModal('privacy')} className="hover:text-amber-400 transition">Privacy Policy &amp; Sub-Processors (DPDP 2023)</button>
-          <button onClick={() => setLegalModal('refund')} className="hover:text-amber-400 transition">Refund &amp; Cancellation</button>
-          <button onClick={() => setLegalModal('contact')} className="hover:text-amber-400 transition">Contact &amp; Grievance</button>
+        <div className="flex flex-wrap justify-center gap-6 font-semibold">
+          <button onClick={() => setLegalModal('terms')} className="hover:text-amber-600 transition">Terms &amp; Conditions</button>
+          <button onClick={() => setLegalModal('privacy')} className="hover:text-amber-600 transition">Privacy Policy &amp; Sub-Processors (DPDP 2023)</button>
+          <button onClick={() => setLegalModal('refund')} className="hover:text-amber-600 transition">Refund &amp; Cancellation</button>
+          <button onClick={() => setLegalModal('contact')} className="hover:text-amber-600 transition">Contact &amp; Grievance</button>
         </div>
         <p>FeedbackPulse101 • MSME Registered Enterprise • Zero Ad Trackers • 1-Year Auto-Retention • SSL &amp; RLS Protected</p>
       </footer>
@@ -275,7 +285,7 @@ function HomePage({ onOpenSerial, theme }) {
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 sm:py-16 space-y-10">
       <div className={`p-8 sm:p-12 text-center max-w-3xl mx-auto space-y-5 ${theme.card}`}>
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-400/20 text-amber-300 text-xs font-semibold border border-amber-300/30">
+        <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold ${theme.badgePill}`}>
           <Sparkles className="w-3.5 h-3.5" /> Tap NFC or Scan QR • Instant Reputation Routing
         </div>
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-tight">
@@ -306,7 +316,7 @@ function HomePage({ onOpenSerial, theme }) {
           { icon: ShieldCheck, title: 'DPDP 2023 Compliant', desc: 'Zero ad trackers, email-isolated RLS, double-OTP parental verification, and 1-year auto-retention.' },
         ].map((item, idx) => (
           <div key={idx} className={`p-6 space-y-2.5 ${theme.card}`}>
-            <div className="w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-300/30 text-amber-300 flex items-center justify-center">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.badgePill}`}>
               <item.icon className="w-5 h-5" />
             </div>
             <h3 className="font-bold text-base">{item.title}</h3>
@@ -318,7 +328,7 @@ function HomePage({ onOpenSerial, theme }) {
   );
 }
 
-/* ==================== 2. GUEST RATING PAGE (MINIMAL DATA COLLECTION) ==================== */
+/* ==================== 2. GUEST RATING PAGE ==================== */
 function GuestRatingPage({ slug, theme }) {
   const [stand, setStand] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -402,7 +412,6 @@ function GuestRatingPage({ slug, theme }) {
     const isLowScore = totalStars < 7;
     const breakdownSummary = `[Q1:${q1}/5, Q2:${q2}/5, Q3:${q3}/5 | Total:${totalStars}/15] ${reviewText.trim()}`;
 
-    // Data minimization: only store score, optional note, and routed flag (no IP, fingerprint, or device tracking)
     const { error } = await supabase.from('feedback_logs').insert({
       stand_id: stand.id,
       rating_score: totalStars,
@@ -449,12 +458,12 @@ function GuestRatingPage({ slug, theme }) {
     }, 1500);
   };
 
-  if (loading) return <div className="py-20 text-center text-sm text-white/80">Loading survey...</div>;
+  if (loading) return <div className="py-20 text-center text-sm text-white font-semibold">Loading survey...</div>;
   if (!stand || !stand.is_active) {
     return (
       <div className="max-w-md mx-auto my-16 px-4">
         <div className={`p-8 text-center space-y-2 ${theme.card}`}>
-          <AlertTriangle className="w-8 h-8 text-amber-400 mx-auto" />
+          <AlertTriangle className={`w-8 h-8 mx-auto ${theme.accentText}`} />
           <h2 className="font-bold text-lg">Stand Inactive or Not Found</h2>
           <p className={`text-xs ${theme.muted}`}>Please verify the QR serial code ({slug}) or contact the business.</p>
         </div>
@@ -474,19 +483,19 @@ function GuestRatingPage({ slug, theme }) {
     return (
       <div className="max-w-md mx-auto my-10 px-4">
         <div className={`p-8 text-center space-y-5 ${theme.card}`}>
-          <div className="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(16,185,129,0.55)]">
+          <div className="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-md">
             <CheckCircle2 className="w-7 h-7" />
           </div>
           <div className="space-y-2">
             <h1 className="text-xl font-extrabold">Thank You for Your Visit!</h1>
             <p className={`text-xs sm:text-sm leading-relaxed ${theme.muted}`}>
-              We truly appreciate your honest review for <strong className="text-amber-300">{stand.business_name}</strong> ({totalStars}/15 stars). Your feedback has been shared directly with the owner so we can improve your next experience.
+              We truly appreciate your honest review for <strong className={theme.accentText}>{stand.business_name}</strong> ({totalStars}/15 stars). Your feedback has been shared directly with the owner so we can improve your next experience.
             </p>
           </div>
 
           {!privateSaved ? (
-            <form onSubmit={saveFollowUpContact} className="space-y-2.5 text-left pt-2 border-t border-white/15">
-              <label className={`block text-xs font-semibold ${theme.muted}`}>Want the manager to reach out to resolve this? (Optional — auto-deleted after 1 year)</label>
+            <form onSubmit={saveFollowUpContact} className="space-y-2.5 text-left pt-2 border-t border-stone-200/40">
+              <label className={`block text-xs font-semibold ${theme.muted}`}>Want the manager to reach out to resolve this? (Optional)</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -502,19 +511,23 @@ function GuestRatingPage({ slug, theme }) {
               </div>
             </form>
           ) : (
-            <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-semibold">
+            <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-700 text-xs font-bold">
               Feedback saved! You may now safely close this page.
             </div>
           )}
 
-          <div className="pt-3 border-t border-white/15 space-y-2.5">
+          <div className="pt-3 border-t border-stone-200/40 space-y-2.5">
             {stand.google_review_url && (
               <>
                 <p className={`text-[11px] ${theme.muted}`}>Prefer to post publicly as well?</p>
                 <a
                   href={stand.google_review_url}
                   onClick={() => copyReviewToClipboard(reviewText)}
-                  className="w-full py-2.5 px-4 rounded-xl border border-white/25 bg-white/10 hover:bg-white/20 text-xs font-semibold inline-flex items-center justify-center gap-2 transition"
+                  className={
+                    theme.lightGlass
+                      ? 'w-full py-2.5 px-4 rounded-xl border border-stone-300 bg-stone-100 hover:bg-stone-200 text-stone-900 text-xs font-bold inline-flex items-center justify-center gap-2 transition'
+                      : 'w-full py-2.5 px-4 rounded-xl border border-white/25 bg-white/15 hover:bg-white/25 text-white text-xs font-bold inline-flex items-center justify-center gap-2 transition'
+                  }
                 >
                   <ExternalLink className="w-3.5 h-3.5" /> Write on Google Maps
                 </a>
@@ -534,7 +547,7 @@ function GuestRatingPage({ slug, theme }) {
     <div className="max-w-lg mx-auto my-8 px-4">
       <form onSubmit={handleSurveySubmit} className={`p-6 sm:p-8 space-y-5 ${theme.card}`}>
         <div className="text-center space-y-1.5">
-          <span className="text-[11px] font-mono uppercase tracking-wider px-3 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/30 text-amber-300 font-semibold">
+          <span className={`text-[11px] font-mono uppercase tracking-wider px-3 py-0.5 rounded-full font-bold ${theme.badgePill}`}>
             {stand.stand_slug} {stand.location_label ? `• ${stand.location_label}` : ''}
           </span>
           <h1 className="text-2xl font-extrabold pt-1">{stand.business_name}</h1>
@@ -546,7 +559,7 @@ function GuestRatingPage({ slug, theme }) {
             <div key={idx} className={`p-4 flex flex-col items-start gap-2.5 ${theme.subCard}`}>
               <div className="w-full flex items-center justify-between">
                 <span className="text-xs sm:text-sm font-bold">{q.label}</span>
-                <span className={`text-[11px] font-semibold ${theme.accentText}`}>{q.value}/5</span>
+                <span className={`text-[11px] font-bold ${theme.accentText}`}>{q.value}/5</span>
               </div>
               <div className="flex items-center gap-2.5">
                 {[1, 2, 3, 4, 5].map((starNum) => (
@@ -560,10 +573,10 @@ function GuestRatingPage({ slug, theme }) {
                     <Star
                       className={`w-7 h-7 ${
                         starNum <= q.value
-                          ? 'fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]'
+                          ? 'fill-amber-400 text-amber-400'
                           : theme.lightGlass
                           ? 'text-stone-300'
-                          : 'text-white/30'
+                          : 'text-stone-600'
                       }`}
                     />
                   </button>
@@ -579,7 +592,7 @@ function GuestRatingPage({ slug, theme }) {
               <Sparkles className="w-3.5 h-3.5" /> AI Quick-Write Suggestions (Tap to Auto-Fill &amp; Copy)
             </label>
             {copiedToast && (
-              <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+              <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
                 <Check className="w-3 h-3" /> Copied!
               </span>
             )}
@@ -593,10 +606,12 @@ function GuestRatingPage({ slug, theme }) {
                 onClick={() => handleSelectPreset(preset, idx)}
                 className={`text-left p-3 rounded-2xl border text-xs transition ${
                   selectedPresetIdx === idx
-                    ? 'border-amber-300 bg-amber-400/25 font-semibold shadow-sm'
+                    ? theme.lightGlass
+                      ? 'border-amber-500 bg-amber-100 text-stone-950 font-semibold'
+                      : 'border-amber-300 bg-amber-400/25 text-white font-semibold'
                     : theme.lightGlass
-                    ? 'border-stone-200 bg-white/75 hover:border-amber-400 text-stone-800'
-                    : 'border-white/15 bg-white/8 hover:border-amber-300/60 hover:bg-white/15 text-white/90'
+                    ? 'border-stone-200 bg-stone-50 hover:border-amber-400 text-stone-800'
+                    : 'border-white/15 bg-stone-900/80 hover:border-amber-300/60 text-stone-100'
                 }`}
               >
                 “{preset}”
@@ -617,7 +632,7 @@ function GuestRatingPage({ slug, theme }) {
               <button
                 type="button"
                 onClick={() => copyReviewToClipboard(reviewText)}
-                className={`mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold hover:underline ${theme.accentText}`}
+                className={`mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold hover:underline ${theme.accentText}`}
               >
                 <Copy className="w-3 h-3" /> Copy text again
               </button>
@@ -628,7 +643,7 @@ function GuestRatingPage({ slug, theme }) {
         <TurnstileWidget onVerify={setCaptchaToken} />
 
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-rose-500/25 border border-rose-400/40 text-rose-100 text-xs font-medium text-center">
+          <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-700 text-xs font-bold text-center">
             {errorMsg}
           </div>
         )}
@@ -651,7 +666,7 @@ function GuestRatingPage({ slug, theme }) {
   );
 }
 
-/* ==================== 3. DASHBOARD ROUTER (GLASSY OTP + PARENTAL DOUBLE-OTP + UNCHECKED CONSENT TIMESTAMPS) ==================== */
+/* ==================== 3. DASHBOARD ROUTER (OTP LOGIN + AGE SELECTOR + PARENTAL DOUBLE-OTP) ==================== */
 function DashboardRouter({ session, theme, onOpenLegal }) {
   const [email, setEmail] = useState('');
   const [otpDigits, setOtpDigits] = useState(Array(8).fill(''));
@@ -663,8 +678,8 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
   const [authError, setAuthError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Under-18 Parental Double-OTP Login Option
-  const [isUnder18Login, setIsUnder18Login] = useState(false); // Unchecked by default
+  // Explicit Age Group Selection on Login ('18_PLUS' | 'UNDER_18')
+  const [ageGroup, setAgeGroup] = useState('18_PLUS');
   const [parentEmail, setParentEmail] = useState('');
   const [parentOtpCode, setParentOtpCode] = useState('');
   const [parentOtpSent, setParentOtpSent] = useState(false);
@@ -680,7 +695,9 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
   const [tickTermsAt, setTickTermsAt] = useState('');
   const [tickPrivacyAt, setTickPrivacyAt] = useState('');
   const [tickAgeAt, setTickAgeAt] = useState('');
-  const [tickMarketingAt, setTickMarketingAt] = useState(''); // Separate optional marketing consent
+  const [tickMarketingAt, setTickMarketingAt] = useState('');
+
+  const isUnder18Login = ageGroup === 'UNDER_18';
 
   useEffect(() => {
     if (resendTimer <= 0) return;
@@ -723,7 +740,6 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
     return `${user.slice(0, 2)}***@${domain}`;
   };
 
-  // Send OTP (60s cooldown prevents hitting email sending limits)
   const sendOtp = async (e) => {
     if (e) e.preventDefault();
     if (resendTimer > 0) return;
@@ -741,23 +757,31 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
     setAuthError('');
     setLoading(true);
 
-    // 1. Send 8-digit OTP to user email
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+      },
     });
 
     if (error) {
       setLoading(false);
-      setAuthError(error.message);
+      setAuthError(
+        error.message.toLowerCase().includes('rate')
+          ? 'Email rate limit reached in Supabase/Resend. Please wait 60 seconds and check your Spam folder.'
+          : error.message
+      );
       return;
     }
 
-    // 2. If Under-18 selected, also send 8-digit OTP to Parent/Guardian email
     if (isUnder18Login && parentEmail.trim()) {
       const { error: parentErr } = await supabase.auth.signInWithOtp({
         email: parentEmail.trim().toLowerCase(),
-        options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
       });
       if (parentErr) {
         setLoading(false);
@@ -771,7 +795,7 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
     setOtpSent(true);
     setOtpDigits(Array(8).fill(''));
     setVerifyStage('idle');
-    setResendTimer(60); // 60s email-limit saver cooldown
+    setResendTimer(60);
     setTimeout(() => inputRefs.current[0]?.focus(), 150);
   };
 
@@ -786,7 +810,6 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
     setVerifyStage('verifying');
     setLoading(true);
 
-    // If Under-18, verify Parent/Guardian 8-digit OTP first
     if (isUnder18Login) {
       const { error: pErr } = await supabase.auth.verifyOtp({
         email: parentEmail.trim().toLowerCase(),
@@ -802,7 +825,6 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
       setParentVerifiedAt(new Date().toISOString());
     }
 
-    // Verify User 8-digit OTP
     const { data, error } = await supabase.auth.verifyOtp({
       email: email.trim().toLowerCase(),
       token: codeStr,
@@ -818,7 +840,6 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
       setVerifiedAt(new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
       setVerifyStage('verified');
 
-      // Record Double-OTP Parental Consent in database if under 18
       if (isUnder18Login && data?.user) {
         await supabase.from('owner_profiles').upsert({
           id: data.user.id,
@@ -898,7 +919,6 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
       .select()
       .single();
 
-    // Record every individual checkbox tick with its exact timestamp
     const auditRows = [
       { user_id: session.user.id, user_email: session.user.email, consent_type: 'TERMS_AND_CONDITIONS', granted: true, recorded_at: tickTermsAt },
       { user_id: session.user.id, user_email: session.user.email, consent_type: 'PRIVACY_POLICY_DPDP2023', granted: true, recorded_at: tickPrivacyAt },
@@ -918,7 +938,7 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
         <div className={`w-full max-w-md p-7 sm:p-9 space-y-6 transition-all duration-500 ${theme.card}`}>
           {verifyStage === 'confirmed' ? (
             <div className="text-center space-y-5 py-2">
-              <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(16,185,129,0.55)]">
+              <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-md">
                 <Check className="w-8 h-8 stroke-[3]" />
               </div>
               <div className="space-y-1">
@@ -930,8 +950,8 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
 
               <div className="space-y-2.5 text-left">
                 <div className={`p-3.5 flex items-center gap-3 ${theme.subCard}`}>
-                  <div className="w-8 h-8 rounded-xl bg-amber-400/20 flex items-center justify-center shrink-0">
-                    <Lock className="w-4 h-4 text-amber-300" />
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${theme.badgePill}`}>
+                    <Lock className="w-4 h-4" />
                   </div>
                   <div>
                     <div className="text-xs font-bold">Email confirmed</div>
@@ -941,8 +961,8 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
 
                 {parentVerifiedAt && (
                   <div className={`p-3.5 flex items-center gap-3 ${theme.subCard}`}>
-                    <div className="w-8 h-8 rounded-xl bg-amber-400/20 flex items-center justify-center shrink-0">
-                      <UserCheck className="w-4 h-4 text-amber-300" />
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${theme.badgePill}`}>
+                      <UserCheck className="w-4 h-4" />
                     </div>
                     <div>
                       <div className="text-xs font-bold">Parent / Guardian Double-OTP Verified</div>
@@ -952,8 +972,8 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
                 )}
 
                 <div className={`p-3.5 flex items-center gap-3 ${theme.subCard}`}>
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/25 border border-emerald-400/40 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-4 h-4 text-emerald-300" />
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div>
                     <div className="text-xs font-bold">Device trusted</div>
@@ -969,48 +989,67 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
           ) : !otpSent ? (
             <form onSubmit={sendOtp} className="space-y-4">
               <div className="text-center space-y-2">
-                <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/30 flex items-center justify-center mx-auto">
-                  <QrCode className="w-6 h-6 text-amber-300" />
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto ${theme.badgePill}`}>
+                  <QrCode className="w-6 h-6" />
                 </div>
                 <h2 className="text-2xl font-extrabold tracking-tight">Owner &amp; Admin Portal</h2>
                 <p className={`text-xs ${theme.muted}`}>
-                  Enter your registered email to receive an 8-digit security PIN
+                  Enter your registered email &amp; select your age group to receive an 8-digit PIN
                 </p>
               </div>
 
               {authError && (
-                <div className="p-3 rounded-xl bg-rose-500/25 border border-rose-400/40 text-rose-100 text-xs text-center font-medium">
+                <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-700 text-xs text-center font-bold">
                   {authError}
                 </div>
               )}
 
               <div className="space-y-3">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="owner@yourrestaurant.com"
-                  className={`${theme.input} py-3.5 rounded-2xl`}
-                />
-
-                {/* Unchecked Under-18 Parental Consent Option */}
-                <label className={`flex items-center gap-2.5 p-3 rounded-2xl cursor-pointer select-none ${theme.subCard}`}>
+                <div>
+                  <label className="block text-xs font-bold mb-1">Registered Email Address</label>
                   <input
-                    type="checkbox"
-                    checked={isUnder18Login}
-                    onChange={(e) => setIsUnder18Login(e.target.checked)}
-                    className="w-4 h-4 rounded text-amber-500"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="owner@yourrestaurant.com"
+                    className={`${theme.input} py-3 rounded-2xl`}
                   />
-                  <span className="text-xs">
-                    Applicant is <strong>under 18 years of age</strong> (requires Parent/Guardian 8-digit OTP)
-                  </span>
-                </label>
+                </div>
+
+                {/* Clear Age Selection Pills on Login */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold">Select Your Age Group</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setAgeGroup('18_PLUS')}
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition ${
+                        ageGroup === '18_PLUS'
+                          ? 'border-amber-500 bg-amber-400/25 ring-1 ring-amber-500'
+                          : 'border-stone-300/60 opacity-75'
+                      }`}
+                    >
+                      18 Years or Older
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAgeGroup('UNDER_18')}
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition ${
+                        ageGroup === 'UNDER_18'
+                          ? 'border-amber-500 bg-amber-400/25 ring-1 ring-amber-500'
+                          : 'border-stone-300/60 opacity-75'
+                      }`}
+                    >
+                      Below 18 (Parent OTP)
+                    </button>
+                  </div>
+                </div>
 
                 {isUnder18Login && (
                   <div className="space-y-1.5">
-                    <label className={`block text-[11px] font-semibold ${theme.accentText}`}>
-                      Parent / Legal Guardian Email (Double-OTP Verification)
+                    <label className={`block text-xs font-bold ${theme.accentText}`}>
+                      Parent / Legal Guardian Email (Double 8-Digit OTP Required)
                     </label>
                     <input
                       type="email"
@@ -1034,34 +1073,24 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
                 {loading
                   ? 'Sending 8-Digit Code...'
                   : isUnder18Login
-                  ? 'Send Double Verification Codes (Owner + Parent)'
-                  : 'Send Verification Code'}
+                  ? 'Send Double OTPs (Owner + Parent)'
+                  : 'Send 8-Digit Verification Code'}
               </button>
             </form>
           ) : (
             <div className="space-y-5">
               <div className="text-center space-y-2">
-                <div
-                  className={`w-12 h-12 rounded-full mx-auto flex items-center justify-center border transition-all duration-300 ${
-                    verifyStage === 'verified'
-                      ? 'bg-emerald-500 border-emerald-300 shadow-[0_0_25px_rgba(16,185,129,0.7)]'
-                      : 'bg-amber-400/20 border-amber-300/30'
-                  }`}
-                >
-                  {verifyStage === 'verified' ? (
-                    <Check className="w-6 h-6 text-white stroke-[3]" />
-                  ) : (
-                    <Lock className="w-5 h-5 text-amber-300" />
-                  )}
+                <div className={`w-12 h-12 rounded-full mx-auto flex items-center justify-center ${theme.badgePill}`}>
+                  {verifyStage === 'verified' ? <Check className="w-6 h-6 stroke-[3]" /> : <Lock className="w-5 h-5" />}
                 </div>
                 <h2 className="text-2xl font-extrabold tracking-tight">Check your inbox</h2>
                 <p className={`text-xs ${theme.muted}`}>
-                  Enter the 8-digit code sent to <strong>{maskEmail(email)}</strong>
+                  Enter the 8-digit code sent to <strong>{maskEmail(email)}</strong> (check Spam/Promotions too)
                 </p>
               </div>
 
               {authError && (
-                <div className="p-3 rounded-xl bg-rose-500/25 border border-rose-400/40 text-rose-100 text-xs text-center font-medium">
+                <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-700 text-xs text-center font-bold">
                   {authError}
                 </div>
               )}
@@ -1078,20 +1107,15 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
                     disabled={verifyStage === 'verifying' || verifyStage === 'verified'}
                     onChange={(e) => handleDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => handleDigitKeyDown(idx, e)}
-                    className={`h-14 rounded-2xl text-center font-mono text-xl font-extrabold border backdrop-blur-md transition-all focus:outline-none ${
-                      verifyStage === 'verified'
-                        ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 shadow-[0_0_15px_rgba(16,185,129,0.35)]'
-                        : digit
-                        ? 'bg-amber-400/25 border-amber-300 text-amber-200'
-                        : theme.lightGlass
-                        ? 'bg-white/80 border-stone-300 text-stone-900 focus:border-amber-500'
-                        : 'bg-white/10 border-white/20 text-white focus:border-amber-300 focus:bg-white/20'
+                    className={`h-14 rounded-2xl text-center font-mono text-xl font-extrabold border transition-all focus:outline-none ${
+                      theme.lightGlass
+                        ? 'bg-white border-stone-300 text-stone-900 focus:border-amber-500'
+                        : 'bg-stone-900 border-white/25 text-white focus:border-amber-300'
                     }`}
                   />
                 ))}
               </div>
 
-              {/* Second 8-Digit OTP Box for Parent/Guardian when Under 18 */}
               {isUnder18Login && parentOtpSent && (
                 <div className={`p-3.5 space-y-2 ${theme.subCard}`}>
                   <label className={`block text-xs font-bold ${theme.accentText}`}>
@@ -1118,36 +1142,16 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
                   verifyStage === 'verified'
                 }
                 onClick={() => submitEightDigitCode(joinedCode)}
-                className={`w-full py-3.5 rounded-2xl font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 ${
-                  verifyStage === 'verified'
-                    ? 'bg-emerald-500 text-white'
-                    : verifyStage === 'verifying'
-                    ? 'bg-amber-200 text-stone-950'
-                    : joinedCode.length === 8 && (!isUnder18Login || parentOtpCode.length === 8)
-                    ? theme.primaryBtn
-                    : 'bg-white/20 text-white/50 cursor-not-allowed'
-                }`}
+                className={`w-full py-3.5 rounded-2xl text-sm disabled:opacity-45 ${theme.primaryBtn}`}
               >
-                {verifyStage === 'verified' ? (
-                  <>
-                    <Check className="w-4 h-4 stroke-[3]" /> Verified
-                  </>
-                ) : verifyStage === 'verifying' ? (
-                  'Verifying...'
-                ) : isUnder18Login ? (
-                  'Verify Both OTPs'
-                ) : (
-                  'Verify code'
-                )}
+                {verifyStage === 'verified' ? 'Verified ✓' : verifyStage === 'verifying' ? 'Verifying...' : 'Verify code'}
               </button>
 
               <div className={`text-center space-y-2 text-xs ${theme.muted}`}>
                 <div>
                   Didn&apos;t get a code?{' '}
                   {resendTimer > 0 ? (
-                    <span className="font-semibold">
-                      Resend in 0:{resendTimer.toString().padStart(2, '0')}
-                    </span>
+                    <span className="font-bold">Resend in 0:{resendTimer.toString().padStart(2, '0')}</span>
                   ) : (
                     <button type="button" onClick={() => sendOtp()} className={`font-bold hover:underline ${theme.accentText}`}>
                       Resend now
@@ -1164,7 +1168,7 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
                     setVerifyStage('idle');
                     setAuthError('');
                   }}
-                  className="text-[11px] opacity-75 hover:opacity-100 underline"
+                  className="text-[11px] underline"
                 >
                   Use a different email address
                 </button>
@@ -1177,11 +1181,11 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
   }
 
   if (profileLoading || !profile) {
-    return <div className="py-20 text-center text-sm text-white/80">Verifying security profile...</div>;
+    return <div className="py-20 text-center text-sm text-white font-semibold">Verifying security profile...</div>;
   }
 
-  // GRANULAR UNCHECKED CONSENT GATE (Every single tick recorded with timestamp; marketing kept separate)
-  if (!profile.terms_accepted_at || !profile.privacy_accepted_at || !profile.age_confirmed) {
+  // Require explicit Privacy Policy + Age Verified timestamps (never pre-ticked)
+  if (!profile.terms_accepted_at || !profile.privacy_accepted_at || !profile.age_verified_at) {
     const allRequiredChecked = Boolean(tickTermsAt && tickPrivacyAt && tickAgeAt);
     return (
       <div className="max-w-xl mx-auto my-10 px-4">
@@ -1195,7 +1199,7 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
           </p>
 
           <div>
-            <label className="block text-xs font-semibold mb-1.5">Business Owner / Authorized Representative Name</label>
+            <label className="block text-xs font-bold mb-1.5">Business Owner / Authorized Representative Name</label>
             <input
               type="text"
               required
@@ -1206,7 +1210,6 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
             />
           </div>
 
-          {/* 1. Terms & Conditions Checkbox (Unchecked by default) */}
           <label className={`flex items-start gap-3 p-3.5 cursor-pointer select-none ${theme.subCard}`}>
             <input
               type="checkbox"
@@ -1217,15 +1220,14 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
             />
             <div className="text-xs leading-relaxed">
               <strong>[Required]</strong> I have read and accept the{' '}
-              <button type="button" onClick={() => onOpenLegal('terms')} className={`underline font-semibold ${theme.accentText}`}>
+              <button type="button" onClick={() => onOpenLegal('terms')} className={`underline font-bold ${theme.accentText}`}>
                 Terms &amp; Conditions
               </button>{' '}
               (including Consumer Protection Act / CCPA anti-review-gating guidelines).
-              {tickTermsAt && <span className="block text-[10px] text-emerald-400 mt-0.5">Ticked at: {tickTermsAt}</span>}
+              {tickTermsAt && <span className="block text-[10px] text-emerald-600 font-bold mt-0.5">Ticked at: {tickTermsAt}</span>}
             </div>
           </label>
 
-          {/* 2. Privacy Policy & Sub-Processors Checkbox (Unchecked by default) */}
           <label className={`flex items-start gap-3 p-3.5 cursor-pointer select-none ${theme.subCard}`}>
             <input
               type="checkbox"
@@ -1236,14 +1238,13 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
             />
             <div className="text-xs leading-relaxed">
               <strong>[Required]</strong> I have read and accept the{' '}
-              <button type="button" onClick={() => onOpenLegal('privacy')} className={`underline font-semibold ${theme.accentText}`}>
+              <button type="button" onClick={() => onOpenLegal('privacy')} className={`underline font-bold ${theme.accentText}`}>
                 Privacy Policy, Sub-Processors &amp; 1-Year Retention Schedule (DPDP Act, 2023)
               </button>.
-              {tickPrivacyAt && <span className="block text-[10px] text-emerald-400 mt-0.5">Ticked at: {tickPrivacyAt}</span>}
+              {tickPrivacyAt && <span className="block text-[10px] text-emerald-600 font-bold mt-0.5">Ticked at: {tickPrivacyAt}</span>}
             </div>
           </label>
 
-          {/* 3. Age 18+ or Verified Parental Consent Checkbox (Unchecked by default) */}
           <label className={`flex items-start gap-3 p-3.5 cursor-pointer select-none ${theme.subCard}`}>
             <input
               type="checkbox"
@@ -1257,11 +1258,10 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
               {profile.is_under_18
                 ? `I confirm verifiable Parental/Guardian consent was completed via double-OTP (${profile.parent_email}).`
                 : 'I confirm that I am 18 years of age or older and legally authorized to bind my business.'}
-              {tickAgeAt && <span className="block text-[10px] text-emerald-400 mt-0.5">Ticked at: {tickAgeAt}</span>}
+              {tickAgeAt && <span className="block text-[10px] text-emerald-600 font-bold mt-0.5">Ticked at: {tickAgeAt}</span>}
             </div>
           </label>
 
-          {/* 4. Separate Optional Marketing Consent Checkbox (Unchecked by default) */}
           <label className={`flex items-start gap-3 p-3.5 cursor-pointer select-none ${theme.subCard}`}>
             <input
               type="checkbox"
@@ -1270,16 +1270,12 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
               className="mt-0.5 w-4 h-4 rounded text-amber-500"
             />
             <div className="text-xs leading-relaxed">
-              <strong>[Optional — Separate Marketing Consent]</strong> I agree to receive occasional product updates, feature tips, and promotional offers from FeedbackPulse101. (You can use the service without ticking this.)
-              {tickMarketingAt && <span className="block text-[10px] text-emerald-400 mt-0.5">Opted-in at: {tickMarketingAt}</span>}
+              <strong>[Optional — Separate Marketing Consent]</strong> I agree to receive occasional product updates and offers from FeedbackPulse101.
+              {tickMarketingAt && <span className="block text-[10px] text-emerald-600 font-bold mt-0.5">Opted-in at: {tickMarketingAt}</span>}
             </div>
           </label>
 
-          <button
-            type="submit"
-            disabled={!allRequiredChecked || loading}
-            className={`w-full py-3.5 rounded-2xl text-sm disabled:opacity-45 ${theme.primaryBtn}`}
-          >
+          <button type="submit" disabled={!allRequiredChecked || loading} className={`w-full py-3.5 rounded-2xl text-sm disabled:opacity-45 ${theme.primaryBtn}`}>
             {loading ? 'Recording Timestamps...' : 'Save Consent Timestamps & Enter Dashboard'}
           </button>
         </form>
@@ -1294,10 +1290,11 @@ function DashboardRouter({ session, theme, onOpenLegal }) {
   return <ShopOwnerDashboard session={session} profile={profile} theme={theme} />;
 }
 
-/* ==================== 4. SUPER ADMIN DASHBOARD (WITH 72-HR BREACH ALERT BANNER) ==================== */
+/* ==================== 4. SUPER ADMIN DASHBOARD (WITH DELETED ACCOUNTS HISTORY) ==================== */
 function SuperAdminDashboard({ session, theme }) {
   const [stands, setStands] = useState([]);
   const [incidents, setIncidents] = useState([]);
+  const [deletedHistory, setDeletedHistory] = useState([]);
   const [ownerEmail, setOwnerEmail] = useState('');
   const [bizName, setBizName] = useState('');
   const [slug, setSlug] = useState('');
@@ -1327,6 +1324,8 @@ function SuperAdminDashboard({ session, theme }) {
     setStands(data || []);
     const { data: inc } = await supabase.from('security_incidents').select('*').eq('resolved', false).order('detected_at', { ascending: false });
     setIncidents(inc || []);
+    const { data: delH } = await supabase.from('deleted_accounts_history').select('*').order('deleted_at', { ascending: false }).limit(25);
+    setDeletedHistory(delH || []);
   };
 
   useEffect(() => { loadAllStands(); }, []);
@@ -1451,18 +1450,17 @@ function SuperAdminDashboard({ session, theme }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      {/* Real-Time Security Breach / Anomaly Detection Alert Banner (72-Hour Reporting Window) */}
       {incidents.length > 0 && (
-        <div className="p-5 rounded-3xl bg-rose-600/35 backdrop-blur-2xl border border-rose-400 text-rose-100 space-y-3">
+        <div className="p-5 rounded-3xl bg-rose-600 text-white shadow-xl space-y-3">
           <div className="flex items-center gap-2 font-extrabold text-sm">
-            <ShieldAlert className="w-5 h-5 text-rose-300" />
+            <ShieldAlert className="w-5 h-5" />
             SECURITY BREACH / ANOMALY ALERT — 72-Hour Statutory Reporting Window Active
           </div>
           {incidents.map((inc) => (
-            <div key={inc.id} className="p-3 rounded-2xl bg-black/30 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div key={inc.id} className="p-3 rounded-2xl bg-black/25 flex flex-wrap items-center justify-between gap-2 text-xs">
               <div>
                 <strong>{inc.title}:</strong> {inc.details} <br />
-                <span className="text-rose-200">
+                <span>
                   Detected: {new Date(inc.detected_at).toLocaleString('en-IN')} • Report Deadline (72h):{' '}
                   <strong>{new Date(inc.report_deadline_at).toLocaleString('en-IN')}</strong>
                 </span>
@@ -1476,7 +1474,7 @@ function SuperAdminDashboard({ session, theme }) {
       )}
 
       <div className={`p-6 sm:p-7 ${theme.card}`}>
-        <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-amber-400/20 border border-amber-300/30 text-amber-300">
+        <span className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full ${theme.badgePill}`}>
           Super Admin Console
         </span>
         <h1 className="text-2xl sm:text-3xl font-extrabold mt-2">Stand Assignment, Reassignment, Bundles &amp; Approvals</h1>
@@ -1484,7 +1482,7 @@ function SuperAdminDashboard({ session, theme }) {
       </div>
 
       {msg && (
-        <div className="p-4 rounded-2xl bg-emerald-500/25 backdrop-blur-xl border border-emerald-400/40 text-emerald-100 text-xs font-semibold">
+        <div className="p-4 rounded-2xl bg-emerald-600 text-white text-xs font-bold shadow">
           {msg}
         </div>
       )}
@@ -1564,12 +1562,12 @@ function SuperAdminDashboard({ session, theme }) {
                       <p className={`text-xs ${theme.muted}`}>Owner: <strong>{s.owner_email || 'Unassigned'}</strong></p>
                     </div>
                   </label>
-                  <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-amber-400/20 border border-amber-300/30 text-amber-300 font-bold">{s.stand_slug}</span>
+                  <span className={`font-mono text-xs px-2.5 py-0.5 rounded-full font-bold ${theme.badgePill}`}>{s.stand_slug}</span>
                 </div>
 
                 {s.bundle_name && (
-                  <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/15 border border-white/20">
-                    <Layers className="w-3 h-3 text-amber-300" /> Bundle: {s.bundle_name}
+                  <div className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${theme.subCard}`}>
+                    <Layers className={`w-3 h-3 ${theme.accentText}`} /> Bundle: {s.bundle_name}
                   </div>
                 )}
 
@@ -1577,19 +1575,19 @@ function SuperAdminDashboard({ session, theme }) {
                   Plan: <strong>{planObj.label} (₹{s.plan_amount || planObj.price})</strong> • {s.payment_status} ({s.payment_method || 'CASH'}) • Exp: {new Date(s.subscription_expires_at).toLocaleDateString('en-IN')}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-white/15 text-xs">
-                  <button onClick={() => approveAndExtendPayment(s)} className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold">
+                <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-stone-200/40 text-xs">
+                  <button onClick={() => approveAndExtendPayment(s)} className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold">
                     Approve +{planObj.label}
                   </button>
                   <button
                     onClick={() => openReassignModal(s)}
-                    className="px-3 py-1.5 rounded-xl border border-amber-300/40 bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 font-semibold inline-flex items-center gap-1"
+                    className={`px-3 py-1.5 rounded-xl font-bold inline-flex items-center gap-1 ${theme.badgePill}`}
                   >
                     <Edit3 className="w-3.5 h-3.5" /> Reassign / Edit
                   </button>
                   <button
                     onClick={() => deleteStand(s)}
-                    className="px-3 py-1.5 rounded-xl border border-rose-400/40 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-semibold inline-flex items-center gap-1 ml-auto"
+                    className={`px-3 py-1.5 rounded-xl inline-flex items-center gap-1 ml-auto ${theme.dangerBtn}`}
                   >
                     <Trash2 className="w-3.5 h-3.5" /> Delete
                   </button>
@@ -1600,12 +1598,31 @@ function SuperAdminDashboard({ session, theme }) {
         </div>
       </div>
 
+      {/* Deleted Accounts & Erasure Audit History */}
+      <div className="space-y-3">
+        <h2 className="font-bold text-lg text-white drop-shadow">Deleted Data &amp; Erasure Audit History ({deletedHistory.length})</h2>
+        <div className={`divide-y divide-stone-200/30 ${theme.card}`}>
+          {deletedHistory.length === 0 && (
+            <p className={`p-5 text-xs ${theme.muted}`}>No owner data erasure requests recorded yet.</p>
+          )}
+          {deletedHistory.map((item) => (
+            <div key={item.id} className="p-4 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div>
+                <strong>{item.owner_email}</strong> {item.owner_name ? `(${item.owner_name})` : ''} • Erased{' '}
+                <strong>{item.stands_deleted_count}</strong> stand(s) &amp; <strong>{item.feedback_deleted_count}</strong> feedback record(s)
+              </div>
+              <span className={theme.muted}>{new Date(item.deleted_at).toLocaleString('en-IN')}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {editStand && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <form onSubmit={saveReassignedStand} className={`max-w-lg w-full p-6 space-y-4 ${theme.card}`}>
             <div className="flex justify-between items-center">
               <h3 className="font-extrabold text-base">Reassign / Edit Stand — {editStand.stand_slug}</h3>
-              <button type="button" onClick={() => setEditStand(null)} className="p-1 rounded-lg hover:bg-white/15"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={() => setEditStand(null)} className="p-1 rounded-lg hover:bg-stone-200/30"><X className="w-5 h-5" /></button>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-3 text-xs">
@@ -1650,7 +1667,7 @@ function SuperAdminDashboard({ session, theme }) {
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <button type="button" onClick={() => setEditStand(null)} className="px-4 py-2 rounded-xl border border-white/25 text-xs font-semibold hover:bg-white/10">Cancel</button>
+              <button type="button" onClick={() => setEditStand(null)} className="px-4 py-2 rounded-xl border border-stone-300 text-xs font-bold">Cancel</button>
               <button type="submit" className={`px-5 py-2 rounded-xl text-xs ${theme.primaryBtn}`}>Save &amp; Reassign QR</button>
             </div>
           </form>
@@ -1660,7 +1677,7 @@ function SuperAdminDashboard({ session, theme }) {
   );
 }
 
-/* ==================== 5. SHOP OWNER DASHBOARD (DATA EXPORT + OTP DELETE ALL DATA) ==================== */
+/* ==================== 5. SHOP OWNER DASHBOARD (FIXED OTP ERASURE + HIGH CONTRAST) ==================== */
 function ShopOwnerDashboard({ session, profile, theme }) {
   const [stands, setStands] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -1672,14 +1689,12 @@ function ShopOwnerDashboard({ session, profile, theme }) {
   const [selectedPayMethod, setSelectedPayMethod] = useState('CASH');
   const [payNotice, setPayNotice] = useState('');
 
-  // OTP-Verified Single Stand Cancellation Modal
   const [cancelStand, setCancelStand] = useState(null);
   const [cancelOtpSent, setCancelOtpSent] = useState(false);
   const [cancelOtpCode, setCancelOtpCode] = useState('');
   const [cancelError, setCancelError] = useState('');
   const [cancelBusy, setCancelBusy] = useState(false);
 
-  // OTP-Verified "Delete All My Account & Stand Data" Modal (DPDP Right to Erasure)
   const [deleteAllModal, setDeleteAllModal] = useState(false);
   const [delOtpSent, setDelOtpSent] = useState(false);
   const [delOtpCode, setDelOtpCode] = useState('');
@@ -1715,7 +1730,6 @@ function ShopOwnerDashboard({ session, profile, theme }) {
 
   useEffect(() => { loadOwnerData(); }, [session]);
 
-  // Download All Owner Data (JSON export under DPDP Act Right to Access)
   const downloadOwnerData = async () => {
     const { data: consentLogs } = await supabase
       .from('consent_audit_logs')
@@ -1756,25 +1770,35 @@ function ShopOwnerDashboard({ session, profile, theme }) {
     e.preventDefault();
     setDelError('');
     setDelBusy(true);
-    const { error } = await supabase.auth.verifyOtp({
+
+    // 1. Verify 8-digit OTP PIN
+    const { error: otpErr } = await supabase.auth.verifyOtp({
       email: session.user.email,
       token: delOtpCode.trim(),
       type: 'email',
     });
-    if (error) {
+
+    if (otpErr) {
       setDelBusy(false);
-      setDelError('Invalid or expired 8-digit OTP PIN.');
+      setDelError('Invalid or expired 8-digit OTP PIN. Please request a fresh code and try again.');
       return;
     }
 
+    // 2. Archive to deleted_accounts_history & erase all owner records in Supabase
     const { error: rpcErr } = await supabase.rpc('delete_all_owner_data');
-    setDelBusy(false);
     if (rpcErr) {
-      setDelError(rpcErr.message);
+      setDelBusy(false);
+      setDelError(`Database erasure error: ${rpcErr.message}`);
       return;
     }
+
+    // 3. Clear local state, sign out, and redirect to home
+    setStands([]);
+    setLogs([]);
+    setDelBusy(false);
+    setDeleteAllModal(false);
     await supabase.auth.signOut();
-    window.location.href = '/';
+    window.location.replace('/');
   };
 
   const getDaysLeft = (isoDate) => {
@@ -1860,19 +1884,18 @@ function ShopOwnerDashboard({ session, profile, theme }) {
           </p>
         </div>
 
-        {/* DPDP Privacy Rights: Download My Data & OTP-Verified Delete All Data */}
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
             onClick={downloadOwnerData}
-            className="px-3.5 py-2 rounded-xl border border-white/25 bg-white/15 hover:bg-white/25 text-xs font-bold inline-flex items-center gap-1.5 transition"
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition ${theme.subCard}`}
           >
-            <Download className="w-3.5 h-3.5 text-amber-300" /> Download My Data
+            <Download className={`w-3.5 h-3.5 ${theme.accentText}`} /> Download My Data
           </button>
           <button
             type="button"
             onClick={() => { setDeleteAllModal(true); setDelOtpSent(false); setDelOtpCode(''); setDelError(''); }}
-            className="px-3.5 py-2 rounded-xl border border-rose-400/40 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-xs font-bold inline-flex items-center gap-1.5 transition"
+            className={`px-3.5 py-2 rounded-xl text-xs inline-flex items-center gap-1.5 transition ${theme.dangerBtn}`}
           >
             <Trash2 className="w-3.5 h-3.5" /> Delete All My Data
           </button>
@@ -1880,9 +1903,9 @@ function ShopOwnerDashboard({ session, profile, theme }) {
       </div>
 
       {expiringSoonStands.length > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-500/25 backdrop-blur-xl border border-amber-300/50 text-amber-100 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 rounded-2xl bg-amber-500 text-stone-950 font-semibold flex flex-wrap items-center justify-between gap-3 shadow">
           <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-amber-300 shrink-0" />
+            <Clock className="w-5 h-5 shrink-0" />
             <div className="text-xs sm:text-sm">
               <strong>Subscription Renewal Reminder (Within 7 Days):</strong>{' '}
               {expiringSoonStands.map((s) => `${s.stand_slug} (${getDaysLeft(s.subscription_expires_at)}d left)`).join(', ')}.
@@ -1890,7 +1913,7 @@ function ShopOwnerDashboard({ session, profile, theme }) {
           </div>
           <button
             onClick={() => { setPayStand(expiringSoonStands[0]); setSelectedPlanId('PLAN_3M'); setSelectedPayMethod('CASH'); }}
-            className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 text-xs font-bold"
+            className="px-4 py-2 rounded-xl bg-stone-950 text-white text-xs font-bold"
           >
             Renew Now (3 / 6 / 12 Months)
           </button>
@@ -1898,7 +1921,7 @@ function ShopOwnerDashboard({ session, profile, theme }) {
       )}
 
       {payNotice && (
-        <div className="p-4 rounded-2xl bg-emerald-500/25 backdrop-blur-xl border border-emerald-400/40 text-emerald-100 text-xs font-semibold flex justify-between items-center">
+        <div className="p-4 rounded-2xl bg-emerald-600 text-white text-xs font-bold flex justify-between items-center shadow">
           <span>{payNotice}</span>
           <button onClick={() => setPayNotice('')}><X className="w-4 h-4" /></button>
         </div>
@@ -1906,10 +1929,10 @@ function ShopOwnerDashboard({ session, profile, theme }) {
 
       {bundleNames.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-white/80 flex items-center gap-1"><Layers className="w-3.5 h-3.5 text-amber-300" /> QR Bundles:</span>
+          <span className="text-xs font-bold text-white flex items-center gap-1"><Layers className="w-3.5 h-3.5 text-amber-300" /> QR Bundles:</span>
           <button
             onClick={() => setActiveBundleFilter('ALL')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold ${activeBundleFilter === 'ALL' ? theme.primaryBtn : 'bg-white/15 border border-white/20 text-white'}`}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold ${activeBundleFilter === 'ALL' ? theme.primaryBtn : 'bg-white/90 text-stone-900'}`}
           >
             All Stands ({stands.length})
           </button>
@@ -1917,7 +1940,7 @@ function ShopOwnerDashboard({ session, profile, theme }) {
             <button
               key={b}
               onClick={() => setActiveBundleFilter(b)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold ${activeBundleFilter === b ? theme.primaryBtn : 'bg-white/15 border border-white/20 text-white'}`}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold ${activeBundleFilter === b ? theme.primaryBtn : 'bg-white/90 text-stone-900'}`}
             >
               {b} ({stands.filter((s) => s.bundle_name === b).length})
             </button>
@@ -1952,18 +1975,18 @@ function ShopOwnerDashboard({ session, profile, theme }) {
                         Current Plan: <strong>{currentPlan.label} (₹{s.plan_amount || currentPlan.price})</strong> • Status: <strong>{s.payment_status}</strong>
                       </p>
                       {s.bundle_name && (
-                        <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-white/15 border border-white/20">
-                          <Layers className="w-3 h-3 text-amber-300" /> Bundle: {s.bundle_name}
+                        <span className={`inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${theme.subCard}`}>
+                          <Layers className={`w-3 h-3 ${theme.accentText}`} /> Bundle: {s.bundle_name}
                         </span>
                       )}
                     </div>
 
                     <span className={`text-xs font-bold px-3 py-1 rounded-full ${
                       !s.is_active
-                        ? 'bg-rose-500/25 border border-rose-400/40 text-rose-200'
+                        ? 'bg-rose-100 text-rose-800 border border-rose-300'
                         : daysLeft <= 7
-                        ? 'bg-amber-400/25 border border-amber-300/40 text-amber-200'
-                        : 'bg-emerald-500/25 border border-emerald-400/40 text-emerald-200'
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                        : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
                     }`}>
                       {!s.is_active ? 'Cancelled' : `${daysLeft} days left`}
                     </span>
@@ -1974,18 +1997,18 @@ function ShopOwnerDashboard({ session, profile, theme }) {
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         onClick={() => { navigator.clipboard.writeText(shareUrl); setCopiedId(s.id); setTimeout(() => setCopiedId(''), 1500); }}
-                        className="p-1.5 rounded-lg bg-white/15 border border-white/20 hover:bg-white/25"
+                        className="p-1.5 rounded-lg border border-stone-300/60 hover:bg-stone-200/40"
                         title="Copy Link"
                       >
-                        {copiedId === s.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copiedId === s.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                       </button>
-                      <a href={shareUrl} target="_blank" rel="noreferrer" className="p-1.5 rounded-lg bg-white/15 border border-white/20 hover:bg-white/25" title="Open Stand">
+                      <a href={shareUrl} target="_blank" rel="noreferrer" className="p-1.5 rounded-lg border border-stone-300/60 hover:bg-stone-200/40" title="Open Stand">
                         <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/15">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-stone-200/40">
                     <button
                       onClick={() => { setPayStand(s); setSelectedPlanId(s.plan_type || 'PLAN_3M'); setSelectedPayMethod('CASH'); }}
                       className={`flex-1 py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 ${theme.primaryBtn}`}
@@ -1997,7 +2020,7 @@ function ShopOwnerDashboard({ session, profile, theme }) {
                     {s.is_active && (
                       <button
                         onClick={() => { setCancelStand(s); setCancelOtpSent(false); setCancelOtpCode(''); setCancelError(''); }}
-                        className="py-2.5 px-3 rounded-xl border border-rose-400/40 bg-rose-500/20 text-rose-200 hover:bg-rose-500/30 text-xs font-semibold"
+                        className={`py-2.5 px-3 rounded-xl text-xs ${theme.dangerBtn}`}
                       >
                         Cancel Subscription
                       </button>
@@ -2010,13 +2033,13 @@ function ShopOwnerDashboard({ session, profile, theme }) {
         )}
       </div>
 
-      {/* Private Feedback Ledger (Auto-deleted after 1 year) */}
+      {/* Private Feedback Ledger */}
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-bold text-lg text-white drop-shadow">Customer Feedback Inbox ({logs.length})</h2>
-          <span className="text-[11px] text-white/70">Auto-retention policy: non-essential feedback auto-purges after 365 days</span>
+          <span className="text-[11px] text-white/90 font-medium">Auto-retention policy: non-essential feedback auto-purges after 365 days</span>
         </div>
-        <div className={`divide-y divide-white/15 ${theme.card}`}>
+        <div className={`divide-y divide-stone-200/40 ${theme.card}`}>
           {logs.length === 0 && <p className={`p-6 text-xs ${theme.muted}`}>No guest ratings recorded yet.</p>}
           {logs.map((l) => (
             <div key={l.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -2024,17 +2047,17 @@ function ShopOwnerDashboard({ session, profile, theme }) {
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                     l.rating_score >= 7
-                      ? 'bg-emerald-500/25 border border-emerald-400/40 text-emerald-200'
-                      : 'bg-rose-500/25 border border-rose-400/40 text-rose-200'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : 'bg-rose-100 text-rose-800 border border-rose-300'
                   }`}>
                     Score: {l.rating_score}/15
                   </span>
                   <span className={`text-xs ${theme.muted}`}>{new Date(l.created_at).toLocaleString('en-IN')}</span>
                 </div>
                 <p className="text-sm mt-1">{l.feedback_text || 'Rated without written note'}</p>
-                {l.customer_contact && <p className={`text-xs font-medium mt-0.5 ${theme.accentText}`}>Guest Contact: {l.customer_contact}</p>}
+                {l.customer_contact && <p className={`text-xs font-bold mt-0.5 ${theme.accentText}`}>Guest Contact: {l.customer_contact}</p>}
               </div>
-              <span className={`text-xs font-semibold ${theme.muted}`}>{l.routed_to_google ? 'Routed to Google' : 'Private Resolution'}</span>
+              <span className={`text-xs font-bold ${theme.muted}`}>{l.routed_to_google ? 'Routed to Google' : 'Private Resolution'}</span>
             </div>
           ))}
         </div>
@@ -2046,7 +2069,7 @@ function ShopOwnerDashboard({ session, profile, theme }) {
           <div className={`max-w-lg w-full p-6 space-y-4 ${theme.card}`}>
             <div className="flex justify-between items-center">
               <h3 className="font-extrabold text-base">Subscription Plans — {payStand.stand_slug}</h3>
-              <button onClick={() => setPayStand(null)} className="p-1 rounded-lg hover:bg-white/15"><X className="w-5 h-5" /></button>
+              <button onClick={() => setPayStand(null)} className="p-1 rounded-lg hover:bg-stone-200/40"><X className="w-5 h-5" /></button>
             </div>
             <p className={`text-xs ${theme.muted}`}>
               Location: <strong>{payStand.location_label || 'Main'}</strong> • Time Left: <strong>{getDaysLeft(payStand.subscription_expires_at)} days</strong>. Choose a validity plan:
@@ -2060,11 +2083,11 @@ function ShopOwnerDashboard({ session, profile, theme }) {
                   onClick={() => setSelectedPlanId(plan.id)}
                   className={`p-3 rounded-2xl border text-left space-y-1 transition ${
                     selectedPlanId === plan.id
-                      ? 'border-amber-300 bg-amber-400/25 ring-1 ring-amber-300'
-                      : 'border-white/20 bg-white/10 hover:border-amber-300/60'
+                      ? 'border-amber-500 bg-amber-400/25 ring-1 ring-amber-500'
+                      : 'border-stone-300/60'
                   }`}
                 >
-                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-400/25 text-amber-200">{plan.badge}</span>
+                  <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${theme.badgePill}`}>{plan.badge}</span>
                   <div className="font-extrabold text-sm pt-0.5">{plan.label}</div>
                   <div className={`text-base font-extrabold ${theme.accentText}`}>₹{plan.price}</div>
                   <div className={`text-[10px] ${theme.muted}`}>₹{Math.round(plan.price / plan.months)}/mo</div>
@@ -2076,9 +2099,9 @@ function ShopOwnerDashboard({ session, profile, theme }) {
               <button
                 type="button"
                 onClick={() => setSelectedPayMethod('CASH')}
-                className={`p-3.5 rounded-2xl border text-left space-y-1 ${selectedPayMethod === 'CASH' ? 'border-amber-300 bg-amber-400/25' : 'border-white/20 bg-white/10'}`}
+                className={`p-3.5 rounded-2xl border text-left space-y-1 ${selectedPayMethod === 'CASH' ? 'border-amber-500 bg-amber-400/25' : 'border-stone-300/60'}`}
               >
-                <Banknote className="w-5 h-5 text-emerald-400" />
+                <Banknote className="w-5 h-5 text-emerald-600" />
                 <div className="font-bold text-xs">Pay in Cash</div>
                 <div className={`text-[11px] ${theme.muted}`}>In-person cash collection</div>
               </button>
@@ -2086,9 +2109,9 @@ function ShopOwnerDashboard({ session, profile, theme }) {
               <button
                 type="button"
                 onClick={() => setSelectedPayMethod('UPI')}
-                className={`p-3.5 rounded-2xl border text-left space-y-1 ${selectedPayMethod === 'UPI' ? 'border-amber-300 bg-amber-400/25' : 'border-white/20 bg-white/10'}`}
+                className={`p-3.5 rounded-2xl border text-left space-y-1 ${selectedPayMethod === 'UPI' ? 'border-amber-500 bg-amber-400/25' : 'border-stone-300/60'}`}
               >
-                <Smartphone className="w-5 h-5 text-amber-300" />
+                <Smartphone className={`w-5 h-5 ${theme.accentText}`} />
                 <div className="font-bold text-xs">Pay via UPI</div>
                 <div className={`text-[11px] ${theme.muted}`}>{OWNER_UPI_ID || 'Direct UPI transfer'}</div>
               </button>
@@ -2106,15 +2129,15 @@ function ShopOwnerDashboard({ session, profile, theme }) {
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className={`max-w-md w-full p-6 space-y-4 ${theme.card}`}>
             <div className="flex justify-between items-center">
-              <h3 className="font-extrabold text-base text-rose-300">Cancel Subscription — {cancelStand.stand_slug}</h3>
-              <button onClick={() => setCancelStand(null)} className="p-1 rounded-lg hover:bg-white/15"><X className="w-5 h-5" /></button>
+              <h3 className={`font-extrabold text-base ${theme.dangerTitle}`}>Cancel Subscription — {cancelStand.stand_slug}</h3>
+              <button onClick={() => setCancelStand(null)} className="p-1 rounded-lg hover:bg-stone-200/40"><X className="w-5 h-5" /></button>
             </div>
             <p className={`text-xs ${theme.muted}`}>
               Cancelling requires verifying an <strong>8-digit OTP PIN</strong> sent to <strong>{session.user.email}</strong>.
             </p>
-            {cancelError && <div className="p-3 rounded-xl bg-rose-500/25 border border-rose-400/40 text-rose-100 text-xs">{cancelError}</div>}
+            {cancelError && <div className="p-3 rounded-xl bg-rose-100 border border-rose-300 text-rose-800 text-xs font-bold">{cancelError}</div>}
             {!cancelOtpSent ? (
-              <button onClick={initiateCancelOtp} disabled={cancelBusy} className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm">
+              <button onClick={initiateCancelOtp} disabled={cancelBusy} className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm">
                 {cancelBusy ? 'Sending OTP PIN...' : 'Send Cancellation PIN to My Email'}
               </button>
             ) : (
@@ -2128,7 +2151,7 @@ function ShopOwnerDashboard({ session, profile, theme }) {
                   placeholder="Enter 8-digit OTP PIN"
                   className={`${theme.input} text-center font-mono text-base tracking-widest`}
                 />
-                <button type="submit" disabled={cancelBusy || cancelOtpCode.length < 8} className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm">
+                <button type="submit" disabled={cancelBusy || cancelOtpCode.length < 8} className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm">
                   {cancelBusy ? 'Verifying...' : 'Verify PIN & Cancel Stand'}
                 </button>
               </form>
@@ -2137,20 +2160,20 @@ function ShopOwnerDashboard({ session, profile, theme }) {
         </div>
       )}
 
-      {/* MODAL 3: OTP-Verified "Delete All My Data" (DPDP Right to Erasure) */}
+      {/* MODAL 3: OTP-Verified "Delete All My Data" (DPDP Right to Erasure + Deleted History Audit) */}
       {deleteAllModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className={`max-w-md w-full p-6 space-y-4 ${theme.card}`}>
             <div className="flex justify-between items-center">
-              <h3 className="font-extrabold text-base text-rose-300">Permanently Delete All My Data</h3>
-              <button onClick={() => setDeleteAllModal(false)} className="p-1 rounded-lg hover:bg-white/15"><X className="w-5 h-5" /></button>
+              <h3 className={`font-extrabold text-base ${theme.dangerTitle}`}>Permanently Delete All My Data</h3>
+              <button onClick={() => setDeleteAllModal(false)} className="p-1 rounded-lg hover:bg-stone-200/40"><X className="w-5 h-5" /></button>
             </div>
             <p className={`text-xs leading-relaxed ${theme.muted}`}>
-              Under the Digital Personal Data Protection (DPDP) Act, 2023, this permanently erases your profile, consent logs, assigned QR stands, and feedback records. Verify your <strong>8-digit OTP PIN</strong> sent to <strong>{session.user.email}</strong> to confirm.
+              Under the Digital Personal Data Protection (DPDP) Act, 2023, this permanently erases your profile, consent logs, assigned QR stands, and feedback records (logging an erasure audit entry). Verify your <strong>8-digit OTP PIN</strong> sent to <strong>{session.user.email}</strong> to confirm.
             </p>
-            {delError && <div className="p-3 rounded-xl bg-rose-500/25 border border-rose-400/40 text-rose-100 text-xs">{delError}</div>}
+            {delError && <div className="p-3 rounded-xl bg-rose-100 border border-rose-300 text-rose-800 text-xs font-bold">{delError}</div>}
             {!delOtpSent ? (
-              <button onClick={initiateDeleteAllOtp} disabled={delBusy} className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm">
+              <button onClick={initiateDeleteAllOtp} disabled={delBusy} className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow">
                 {delBusy ? 'Sending Deletion OTP...' : 'Send 8-Digit Erasure OTP to My Email'}
               </button>
             ) : (
@@ -2164,7 +2187,7 @@ function ShopOwnerDashboard({ session, profile, theme }) {
                   placeholder="Enter 8-digit OTP PIN"
                   className={`${theme.input} text-center font-mono text-base tracking-widest`}
                 />
-                <button type="submit" disabled={delBusy || delOtpCode.length < 8} className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm">
+                <button type="submit" disabled={delBusy || delOtpCode.length < 8} className="w-full py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow">
                   {delBusy ? 'Erasing All Data...' : 'Verify OTP & Permanently Erase Everything'}
                 </button>
               </form>
@@ -2181,14 +2204,14 @@ function LegalModal({ type, onClose, theme }) {
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className={`max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6 sm:p-8 space-y-4 ${theme.card}`}>
-        <div className="flex justify-between items-center sticky top-0 pb-2 border-b border-white/15">
+        <div className="flex justify-between items-center sticky top-0 pb-2 border-b border-stone-200/40">
           <h3 className="font-extrabold text-base sm:text-lg">
             {type === 'terms' && 'Terms & Conditions — FeedbackPulse101'}
             {type === 'privacy' && 'Privacy Policy, Sub-Processors & Breach Policy (DPDP Act, 2023)'}
             {type === 'refund' && 'Refund & Cancellation Policy'}
             {type === 'contact' && 'Contact & Grievance Officer'}
           </h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-white/15"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-stone-200/40"><X className="w-5 h-5" /></button>
         </div>
 
         {type === 'terms' && (
@@ -2203,7 +2226,7 @@ function LegalModal({ type, onClose, theme }) {
           <div className={`text-xs sm:text-sm space-y-3 leading-relaxed ${theme.muted}`}>
             <p><strong>1. Data Minimization &amp; Zero Ad Trackers:</strong> We collect only strictly required business owner credentials (email, name, stand configuration) and voluntary guest survey ratings. Zero advertising or behavioral tracking cookies are used.</p>
             <p><strong>2. Granular Consent &amp; Timestamps:</strong> All consents (Terms, Privacy, Age/Parental Double-OTP, and separate optional Marketing) are unchecked by default and logged with exact ISO timestamps.</p>
-            <p><strong>3. Data Retention &amp; Right to Erasure:</strong> Non-essential guest feedback logs are automatically deleted after <strong>365 days (1 year)</strong>. Shop owners can export all their data in JSON format or permanently erase all their records anytime using 8-digit OTP verification.</p>
+            <p><strong>3. Data Retention &amp; Right to Erasure:</strong> Non-essential guest feedback logs are automatically deleted after <strong>365 days (1 year)</strong>. Shop owners can export all their data in JSON format or permanently erase all their records anytime using 8-digit OTP verification (logged in our erasure audit ledger).</p>
             <p><strong>4. Authorized Sub-Processors (DPDP Section 8(2) DPAs Executed):</strong></p>
             <ul className="list-disc pl-5 space-y-1">
               <li><strong>Cloudflare, Inc.</strong> — CDN Hosting, DNS, SSL/TLS &amp; Turnstile Bot Protection (Global Edge)</li>
