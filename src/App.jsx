@@ -10,6 +10,12 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 const ADMIN_EMAIL = 'sangosignature@gmail.com';
 const OWNER_UPI_ID = ''; // Add your UPI ID here (e.g. 'yourname@oksbi') when ready; defaults to Cash collection until added
 
+const SUBSCRIPTION_PLANS = [
+  { id: 'PLAN_3M', label: '3 Months', months: 3, days: 90, price: 399, badge: 'Starter' },
+  { id: 'PLAN_6M', label: '6 Months', months: 6, days: 180, price: 699, badge: 'Save ₹99' },
+  { id: 'PLAN_12M', label: '12 Months', months: 12, days: 365, price: 1199, badge: 'Best Value' },
+];
+
 /* ==================== CLOUDFLARE TURNSTILE WIDGET ==================== */
 function TurnstileWidget({ onVerify }) {
   const containerRef = useRef(null);
@@ -91,7 +97,6 @@ export default function App() {
 
   return (
     <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }} className={darkMode ? 'min-h-screen flex flex-col bg-slate-950 text-slate-100' : 'min-h-screen flex flex-col bg-slate-50 text-slate-900'}>
-      {/* Top Navbar */}
       <header className={darkMode ? 'sticky top-0 z-40 border-b border-slate-800 bg-slate-950/90 backdrop-blur' : 'sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur'}>
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <button onClick={() => navigate('home')} className="flex items-center gap-2.5 text-left">
@@ -141,14 +146,12 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1">
-        {route === 'home' && <HomePage onOpenSerial={(s) => navigate('rate', s)} onOpenDash={() => navigate('dashboard')} darkMode={darkMode} />}
+        {route === 'home' && <HomePage onOpenSerial={(s) => navigate('rate', s)} darkMode={darkMode} />}
         {route === 'rate' && <GuestRatingPage slug={standParam} darkMode={darkMode} />}
         {route === 'dashboard' && <DashboardRouter session={session} darkMode={darkMode} onOpenLegal={setLegalModal} />}
       </main>
 
-      {/* Footer */}
       <footer className={darkMode ? 'border-t border-slate-800 py-8 px-4 text-center text-xs text-slate-400 space-y-3' : 'border-t border-slate-200 py-8 px-4 text-center text-xs text-slate-500 space-y-3 bg-white'}>
         <div className="flex flex-wrap justify-center gap-6 font-medium">
           <button onClick={() => setLegalModal('terms')} className="hover:text-indigo-600">Terms & Conditions</button>
@@ -159,13 +162,13 @@ export default function App() {
         <p>FeedbackPulse101 • MSME Registered Enterprise • Secure SSL & RLS Protected Platform</p>
       </footer>
 
-      {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} darkMode={darkMode} />}
+      {legalModal && <LegalModal type={legalModal} onClose={() => setLegalModal(null)} />}
     </div>
   );
 }
 
 /* ==================== 1. HOME PAGE ==================== */
-function HomePage({ onOpenSerial, onOpenDash, darkMode }) {
+function HomePage({ onOpenSerial, darkMode }) {
   const [serial, setSerial] = useState('');
 
   const handleOpen = (e) => {
@@ -191,7 +194,7 @@ function HomePage({ onOpenSerial, onOpenDash, darkMode }) {
             type="text"
             value={serial}
             onChange={(e) => setSerial(e.target.value)}
-            placeholder="Enter Stand Serial (e.g. TR-8421-MPK)"
+            placeholder="Enter Stand Serial (e.g. STAND3)"
             className={darkMode ? 'flex-1 px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-sm' : 'flex-1 px-4 py-3 rounded-xl bg-white border border-slate-300 text-sm shadow-xs'}
           />
           <button type="submit" className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-xs">
@@ -202,9 +205,9 @@ function HomePage({ onOpenSerial, onOpenDash, darkMode }) {
 
       <div className="grid sm:grid-cols-3 gap-5">
         {[
-          { icon: Star, title: 'Smart Score Routing', desc: 'Scores 8–10 route directly to Google Reviews; scores 1–7 open a private resolution box.' },
+          { icon: Star, title: 'Smart Score Routing', desc: '3-question 5-star survey routes happy guests to Google Reviews and private feedback to the owner.' },
           { icon: Layers, title: 'Multi-Floor QR Bundles', desc: 'Place stands at Reception, Billing & Tables—manage all locations in one unified owner dashboard.' },
-          { icon: ShieldCheck, title: 'Enterprise Security', desc: 'Row-Level Security, 8-digit OTP login & cancellation protection, and bot rate limiting built in.' },
+          { icon: ShieldCheck, title: 'Enterprise Security', desc: 'Email-isolated Row-Level Security, 8-digit OTP login & cancellation protection, and bot rate limiting.' },
         ].map((item, idx) => (
           <div key={idx} className={darkMode ? 'p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-2' : 'p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2'}>
             <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
@@ -219,22 +222,19 @@ function HomePage({ onOpenSerial, onOpenDash, darkMode }) {
   );
 }
 
-/* ==================== 2. GUEST RATING PAGE (3x 5-STAR SURVEY + AI REVIEW HELPER) ==================== */
+/* ==================== 2. GUEST RATING PAGE (STARS BELOW EACH QUESTION + AI PRESETS) ==================== */
 function GuestRatingPage({ slug, darkMode }) {
   const [stand, setStand] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 3 Survey Questions (each 1-5 stars, total out of 15)
-  const [q1, setQ1] = useState(0); // Product / Food / Service Quality
-  const [q2, setQ2] = useState(0); // Staff Behavior & Speed
-  const [q3, setQ3] = useState(0); // Cleanliness & Overall Value
+  const [q1, setQ1] = useState(0);
+  const [q2, setQ2] = useState(0);
+  const [q3, setQ3] = useState(0);
 
-  // AI-Assisted Review Text Box & Presets
   const [reviewText, setReviewText] = useState('');
   const [selectedPresetIdx, setSelectedPresetIdx] = useState(null);
   const [copiedToast, setCopiedToast] = useState(false);
 
-  // Low-rating resolution page state (total < 7 out of 15)
   const [contact, setContact] = useState('');
   const [lowScorePage, setLowScorePage] = useState(false);
   const [privateSaved, setPrivateSaved] = useState(false);
@@ -246,12 +246,8 @@ function GuestRatingPage({ slug, darkMode }) {
   useEffect(() => {
     const loadStand = async () => {
       setLoading(true);
-      const { data } = await supabase
-        .from('qr_stands')
-        .select('id, business_name, stand_slug, location_label, google_review_url, is_active')
-        .eq('stand_slug', slug.toUpperCase())
-        .maybeSingle();
-      setStand(data);
+      const { data } = await supabase.rpc('get_public_stand_by_slug', { p_slug: slug });
+      setStand(Array.isArray(data) ? data[0] || null : data);
       setLoading(false);
     };
     if (slug) loadStand();
@@ -285,6 +281,14 @@ function GuestRatingPage({ slug, darkMode }) {
     } catch {}
   };
 
+  const closePageSafely = () => {
+    try {
+      window.open('', '_self');
+      window.close();
+    } catch {}
+    setPrivateSaved(true);
+  };
+
   const handleSurveySubmit = async (e) => {
     e.preventDefault();
     if (!allAnswered) {
@@ -299,7 +303,7 @@ function GuestRatingPage({ slug, darkMode }) {
     setSubmitting(true);
     setErrorMsg('');
 
-    const isLowScore = totalStars < 7; // Less than 7 out of 15
+    const isLowScore = totalStars < 7;
     const breakdownSummary = `[Q1:${q1}/5, Q2:${q2}/5, Q3:${q3}/5 | Total:${totalStars}/15] ${reviewText.trim()}`;
 
     const { error } = await supabase.from('feedback_logs').insert({
@@ -318,10 +322,8 @@ function GuestRatingPage({ slug, darkMode }) {
     }
 
     if (isLowScore) {
-      // Total < 7 out of 15 -> Take user to Thank You + Optional Google Maps button page
       setLowScorePage(true);
     } else {
-      // Total >= 7 out of 15 -> Auto-copy review message & redirect to Google Reviews
       await copyReviewToClipboard(reviewText);
       if (stand.google_review_url) {
         setTimeout(() => {
@@ -329,14 +331,6 @@ function GuestRatingPage({ slug, darkMode }) {
         }, 700);
       }
     }
-  };
-
-  const closePageSafely = () => {
-    try {
-      window.open('', '_self');
-      window.close();
-    } catch {}
-    setPrivateSaved(true);
   };
 
   const saveFollowUpContact = async (e) => {
@@ -358,7 +352,6 @@ function GuestRatingPage({ slug, darkMode }) {
     }, 1500);
   };
 
-
   if (loading) return <div className="py-20 text-center text-sm text-slate-500">Loading survey...</div>;
   if (!stand || !stand.is_active) {
     return (
@@ -378,7 +371,6 @@ function GuestRatingPage({ slug, darkMode }) {
 
   const presets = getAiPresets(stand.business_name, stand.location_label);
 
-  // PAGE B: Dedicated "Thank You for Your Visit" Page when Total Stars < 7 out of 15
   if (lowScorePage) {
     return (
       <div className="max-w-md mx-auto my-10 px-4">
@@ -443,8 +435,6 @@ function GuestRatingPage({ slug, darkMode }) {
     );
   }
 
-
-  // PAGE A: 3-Question 5-Star Survey + AI Review Preset Box
   return (
     <div className="max-w-lg mx-auto my-8 px-4">
       <form onSubmit={handleSurveySubmit} className={darkMode ? 'p-6 sm:p-8 rounded-2xl bg-slate-900 border border-slate-800 space-y-5' : 'p-6 sm:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5'}>
@@ -456,12 +446,15 @@ function GuestRatingPage({ slug, darkMode }) {
           <p className="text-xs text-slate-500">Rate 3 quick questions below ({totalStars}/15 Stars)</p>
         </div>
 
-        {/* 3 Survey Questions with 5 Stars Each */}
+        {/* 3 Survey Questions with Stars Stacked Directly Below Each Question */}
         <div className="space-y-3">
           {questions.map((q, idx) => (
-            <div key={idx} className={darkMode ? 'p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between gap-2' : 'p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-2'}>
-              <span className="text-xs sm:text-sm font-semibold">{q.label}</span>
-              <div className="flex items-center gap-1 shrink-0">
+            <div key={idx} className={darkMode ? 'p-4 rounded-xl bg-slate-950 border border-slate-800 flex flex-col items-start gap-2.5' : 'p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col items-start gap-2.5'}>
+              <div className="w-full flex items-center justify-between">
+                <span className="text-xs sm:text-sm font-bold">{q.label}</span>
+                <span className="text-[11px] font-semibold text-slate-400">{q.value}/5</span>
+              </div>
+              <div className="flex items-center gap-2">
                 {[1, 2, 3, 4, 5].map((starNum) => (
                   <button
                     key={starNum}
@@ -471,7 +464,7 @@ function GuestRatingPage({ slug, darkMode }) {
                     aria-label={`${starNum} stars`}
                   >
                     <Star
-                      className={`w-6 h-6 ${
+                      className={`w-7 h-7 ${
                         starNum <= q.value
                           ? 'fill-amber-400 text-amber-400'
                           : 'text-slate-300'
@@ -492,7 +485,7 @@ function GuestRatingPage({ slug, darkMode }) {
             </label>
             {copiedToast && (
               <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1">
-                <Check className="w-3 h-3" /> Copied to Clipboard!
+                <Check className="w-3 h-3" /> Copied!
               </span>
             )}
           </div>
@@ -567,7 +560,7 @@ function GuestRatingPage({ slug, darkMode }) {
   );
 }
 
-/* ==================== 3. DASHBOARD ROUTER (AUTH + LEGAL GATE + ROLE SPLIT) ==================== */
+/* ==================== 3. DASHBOARD ROUTER ==================== */
 function DashboardRouter({ session, darkMode, onOpenLegal }) {
   const [email, setEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -578,7 +571,7 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
 
   const [profile, setProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
-  const [consentChecked, setConsentChecked] = useState(false); // Unchecked by default
+  const [consentChecked, setConsentChecked] = useState(false);
   const [ownerFullName, setOwnerFullName] = useState('');
 
   useEffect(() => {
@@ -660,7 +653,6 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
     if (!error && data) setProfile(data);
   };
 
-  // 1. Not Signed In -> Secure OTP + Turnstile Login
   if (!session) {
     return (
       <div className="max-w-md mx-auto my-12 px-4">
@@ -672,7 +664,7 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
           <p className="text-xs text-slate-500">
             {otpSent
               ? `Enter the 8-digit verification code sent to ${email}`
-              : 'Enter your registered email to receive a one-time security code.'}
+              : 'Enter your registered email to receive an 8-digit security PIN.'}
           </p>
 
           {authError && (
@@ -687,7 +679,7 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
                 maxLength={8}
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                placeholder="8-digit security code"
+                placeholder="8-digit security PIN"
                 className="w-full px-4 py-3 rounded-xl border border-slate-300 text-center font-mono text-lg tracking-widest text-slate-900"
               />
               <button
@@ -695,7 +687,7 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
                 disabled={loading || otpCode.length < 6}
                 className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm disabled:opacity-60"
               >
-                {loading ? 'Verifying...' : 'Verify & Open Dashboard'}
+                {loading ? 'Verifying...' : 'Verify PIN & Open Dashboard'}
               </button>
               <button
                 type="button"
@@ -721,7 +713,7 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
                 disabled={loading}
                 className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm disabled:opacity-60"
               >
-                {loading ? 'Sending Security Code...' : 'Send 8-Digit Login Code'}
+                {loading ? 'Sending 8-Digit PIN...' : 'Send 8-Digit Login PIN'}
               </button>
             </form>
           )}
@@ -734,7 +726,6 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
     return <div className="py-20 text-center text-sm text-slate-500">Verifying security profile...</div>;
   }
 
-  // 2. Mandatory Legal, 18+ Age Consent & Privacy Acceptance Gate (Before accessing dashboard)
   if (!profile.terms_accepted_at || !profile.age_confirmed) {
     return (
       <div className="max-w-xl mx-auto my-10 px-4">
@@ -744,7 +735,7 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
           </div>
           <h2 className="text-xl font-extrabold">Welcome to FeedbackPulse101</h2>
           <div className={darkMode ? 'p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2 leading-relaxed' : 'p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2 leading-relaxed'}>
-            <p><strong>How FeedbackPulse101 Works:</strong> Our web platform connects physical QR/NFC stands to smart customer routing. Satisfied guests (score 8–10) are directed to your public Google review link, while dissatisfied guests (score 1–7) submit private service feedback exclusively to your owner dashboard.</p>
+            <p><strong>How FeedbackPulse101 Works:</strong> Our web platform connects physical QR/NFC stands to smart customer routing. Satisfied guests (7–15 stars) are directed to your public Google review link, while dissatisfied guests (under 7 stars) submit private service feedback exclusively to your owner dashboard.</p>
             <p><strong>Regulatory & Ethical Policy:</strong> In accordance with the Consumer Protection Act, 2019 (CCPA Guidelines), merchants must never fabricate reviews, offer cash/discounts for 5-star ratings, or coerce customers. Data is encrypted and stored in compliance with India's Digital Personal Data Protection (DPDP) Act, 2023.</p>
           </div>
 
@@ -787,7 +778,6 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
     );
   }
 
-  // 3. Separate Super Admin Console vs Shop Owner Dashboard
   if (profile.is_super_admin) {
     return <SuperAdminDashboard session={session} darkMode={darkMode} />;
   }
@@ -795,7 +785,7 @@ function DashboardRouter({ session, darkMode, onOpenLegal }) {
   return <ShopOwnerDashboard session={session} profile={profile} darkMode={darkMode} />;
 }
 
-/* ==================== 4. SUPER ADMIN DASHBOARD (ASSIGN STANDS, BUNDLES & APPROVE CASH/UPI) ==================== */
+/* ==================== 4. SUPER ADMIN DASHBOARD ==================== */
 function SuperAdminDashboard({ session, darkMode }) {
   const [stands, setStands] = useState([]);
   const [ownerEmail, setOwnerEmail] = useState('');
@@ -805,6 +795,7 @@ function SuperAdminDashboard({ session, darkMode }) {
   const [bundleName, setBundleName] = useState('');
   const [placeId, setPlaceId] = useState('');
   const [payMethod, setPayMethod] = useState('CASH');
+  const [selectedPlanId, setSelectedPlanId] = useState('PLAN_3M');
   const [selectedForBundle, setSelectedForBundle] = useState([]);
   const [newBundleTitle, setNewBundleTitle] = useState('');
   const [msg, setMsg] = useState('');
@@ -819,6 +810,7 @@ function SuperAdminDashboard({ session, darkMode }) {
   const assignNewStand = async (e) => {
     e.preventDefault();
     setMsg('');
+    const planObj = SUBSCRIPTION_PLANS.find((p) => p.id === selectedPlanId) || SUBSCRIPTION_PLANS[0];
     const reviewUrl = placeId.startsWith('http')
       ? placeId.trim()
       : `https://search.google.com/local/writereview?placeid=${placeId.trim()}`;
@@ -831,14 +823,16 @@ function SuperAdminDashboard({ session, darkMode }) {
       location_label: locationLabel.trim() || 'Main Counter',
       bundle_name: bundleName.trim() || null,
       google_review_url: reviewUrl,
+      plan_type: planObj.id,
+      plan_amount: planObj.price,
       payment_method: payMethod,
       payment_status: 'ACTIVE',
-      subscription_expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+      subscription_expires_at: new Date(Date.now() + planObj.days * 24 * 60 * 60 * 1000).toISOString(),
     });
 
     if (error) setMsg(`Error: ${error.message}`);
     else {
-      setMsg(`Stand ${slug.toUpperCase()} assigned to ${ownerEmail}!`);
+      setMsg(`Stand ${slug.toUpperCase()} (${planObj.label} — ₹${planObj.price}) assigned to ${ownerEmail}!`);
       setSlug(''); setLocationLabel('');
       loadAllStands();
     }
@@ -856,13 +850,15 @@ function SuperAdminDashboard({ session, darkMode }) {
     loadAllStands();
   };
 
-  const approveAndExtendPayment = async (standId) => {
-    const next30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  const approveAndExtendPayment = async (stand) => {
+    const planObj = SUBSCRIPTION_PLANS.find((p) => p.id === stand.plan_type) || SUBSCRIPTION_PLANS[0];
+    const baseTime = Math.max(Date.now(), new Date(stand.subscription_expires_at).getTime());
+    const nextExpiry = new Date(baseTime + planObj.days * 24 * 60 * 60 * 1000).toISOString();
     await supabase
       .from('qr_stands')
-      .update({ payment_status: 'ACTIVE', is_active: true, subscription_expires_at: next30Days })
-      .eq('id', standId);
-    setMsg('Payment confirmed & subscription extended by 30 days.');
+      .update({ payment_status: 'ACTIVE', is_active: true, subscription_expires_at: nextExpiry })
+      .eq('id', stand.id);
+    setMsg(`Payment confirmed (₹${stand.plan_amount || planObj.price}) & extended by ${planObj.label}.`);
     loadAllStands();
   };
 
@@ -872,35 +868,42 @@ function SuperAdminDashboard({ session, darkMode }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
-            Super Admin Console
-          </span>
-          <h1 className="text-2xl font-extrabold mt-1">Stand Assignment, Bundles & Payment Approvals</h1>
-        </div>
+      <div>
+        <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+          Super Admin Console
+        </span>
+        <h1 className="text-2xl font-extrabold mt-1">Stand Assignment, Bundles & Plan Approvals</h1>
       </div>
 
       {msg && <div className="p-3.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">{msg}</div>}
 
-      {/* Assign Stand to Shop Owner */}
       <form onSubmit={assignNewStand} className={darkMode ? 'p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4' : 'p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4'}>
         <h2 className="font-bold text-base flex items-center gap-2"><Plus className="w-4 h-4 text-indigo-600" /> Assign New QR / NFC Stand to Shop Owner</h2>
         <div className="grid sm:grid-cols-3 gap-3">
-          <input type="email" required value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} placeholder="Shop Owner Email" className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900" />
+          <input type="email" required value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} placeholder="Shop Owner Email (Primary Key)" className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900" />
           <input type="text" required value={bizName} onChange={(e) => setBizName(e.target.value)} placeholder="Business Name" className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900" />
           <input type="text" required value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="Stand Serial (e.g. FP-101)" className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900" />
-          <input type="text" value={locationLabel} onChange={(e) => setLocationLabel(e.target.value)} placeholder="Placement (e.g. Ground Floor / Reception)" className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900" />
-          <input type="text" value={bundleName} onChange={(e) => setBundleName(e.target.value)} placeholder="Bundle Name (optional, e.g. Hotel Main Wing)" className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900" />
+          <input type="text" value={locationLabel} onChange={(e) => setLocationLabel(e.target.value)} placeholder="Placement (e.g. Ground Floor)" className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900" />
+          <input type="text" value={bundleName} onChange={(e) => setBundleName(e.target.value)} placeholder="Bundle Name (optional)" className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900" />
           <input type="text" required value={placeId} onChange={(e) => setPlaceId(e.target.value)} placeholder="Google Place ID or Review Link" className="px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-900" />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="font-semibold">Initial Payment Mode:</span>
-            <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-300 text-slate-900">
-              <option value="CASH">Cash Collected</option>
-              <option value="UPI">UPI Payment</option>
-            </select>
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold">Plan:</span>
+              <select value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-300 text-slate-900">
+                {SUBSCRIPTION_PLANS.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label} — ₹{p.price}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-semibold">Payment:</span>
+              <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} className="px-3 py-2 rounded-xl border border-slate-300 text-slate-900">
+                <option value="CASH">Cash Collected</option>
+                <option value="UPI">UPI Payment</option>
+              </select>
+            </div>
           </div>
           <button type="submit" className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">
             Assign Stand to Owner
@@ -908,7 +911,6 @@ function SuperAdminDashboard({ session, darkMode }) {
         </div>
       </form>
 
-      {/* Bundle Multiple QR Stands for One Owner */}
       <div className={darkMode ? 'p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3' : 'p-5 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex flex-wrap items-center justify-between gap-3'}>
         <div className="flex items-center gap-2 text-sm font-bold">
           <Layers className="w-4 h-4 text-indigo-600" />
@@ -933,57 +935,60 @@ function SuperAdminDashboard({ session, darkMode }) {
         </div>
       </div>
 
-      {/* All Assigned Stands & Payment Approvals */}
       <div className="space-y-3">
         <h2 className="font-bold text-lg">All Deployed Stands ({stands.length})</h2>
         <div className="grid sm:grid-cols-2 gap-4">
-          {stands.map((s) => (
-            <div key={s.id} className={darkMode ? 'p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2.5' : 'p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2.5'}>
-              <div className="flex items-start justify-between gap-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={selectedForBundle.includes(s.id)} onChange={() => toggleSelectStand(s.id)} className="rounded text-indigo-600" />
-                  <div>
-                    <h3 className="font-bold text-sm">{s.business_name} <span className="text-xs font-normal text-slate-500">({s.location_label || 'Main'})</span></h3>
-                    <p className="text-xs text-slate-500">Owner: {s.owner_email || 'Unassigned'}</p>
-                  </div>
-                </label>
-                <span className="font-mono text-xs px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">{s.stand_slug}</span>
-              </div>
-
-              {s.bundle_name && (
-                <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700">
-                  <Layers className="w-3 h-3" /> Bundle: {s.bundle_name}
+          {stands.map((s) => {
+            const planObj = SUBSCRIPTION_PLANS.find((p) => p.id === s.plan_type) || SUBSCRIPTION_PLANS[0];
+            return (
+              <div key={s.id} className={darkMode ? 'p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2.5' : 'p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-2.5'}>
+                <div className="flex items-start justify-between gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={selectedForBundle.includes(s.id)} onChange={() => toggleSelectStand(s.id)} className="rounded text-indigo-600" />
+                    <div>
+                      <h3 className="font-bold text-sm">{s.business_name} <span className="text-xs font-normal text-slate-500">({s.location_label || 'Main'})</span></h3>
+                      <p className="text-xs text-slate-500">Owner: <strong>{s.owner_email || 'Unassigned'}</strong></p>
+                    </div>
+                  </label>
+                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">{s.stand_slug}</span>
                 </div>
-              )}
 
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
-                <span>
-                  Status: <strong>{s.payment_status}</strong> ({s.payment_method || 'CASH'}) • Exp: {new Date(s.subscription_expires_at).toLocaleDateString('en-IN')}
-                </span>
-                <button
-                  onClick={() => approveAndExtendPayment(s.id)}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
-                >
-                  Approve Cash/UPI (+30d)
-                </button>
+                {s.bundle_name && (
+                  <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                    <Layers className="w-3 h-3" /> Bundle: {s.bundle_name}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs">
+                  <span>
+                    Plan: <strong>{planObj.label} (₹{s.plan_amount || planObj.price})</strong> • {s.payment_status} ({s.payment_method || 'CASH'}) • Exp: {new Date(s.subscription_expires_at).toLocaleDateString('en-IN')}
+                  </span>
+                  <button
+                    onClick={() => approveAndExtendPayment(s)}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+                  >
+                    Approve +{planObj.label}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
-/* ==================== 5. SHOP OWNER DASHBOARD (MULTI-STAND BUNDLES, CASH/UPI, 7-DAY ALERT & OTP CANCEL) ==================== */
+/* ==================== 5. SHOP OWNER DASHBOARD (STRICT EMAIL ISOLATION + 3/6/12M PLANS) ==================== */
 function ShopOwnerDashboard({ session, profile, darkMode }) {
   const [stands, setStands] = useState([]);
   const [logs, setLogs] = useState([]);
   const [activeBundleFilter, setActiveBundleFilter] = useState('ALL');
   const [copiedId, setCopiedId] = useState('');
 
-  // Individual Stand Payment Modal (Cash or UPI)
+  // Individual Stand Plan & Cash/UPI Payment Modal
   const [payStand, setPayStand] = useState(null);
+  const [selectedPlanId, setSelectedPlanId] = useState('PLAN_3M');
   const [selectedPayMethod, setSelectedPayMethod] = useState('CASH');
   const [payNotice, setPayNotice] = useState('');
 
@@ -995,13 +1000,32 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
   const [cancelBusy, setCancelBusy] = useState(false);
 
   const loadOwnerData = async () => {
-    const { data: sData } = await supabase.from('qr_stands').select('*').order('created_at', { ascending: false });
-    setStands(sData || []);
-    const { data: lData } = await supabase.from('feedback_logs').select('*').order('created_at', { ascending: false }).limit(50);
-    setLogs(lData || []);
+    const userEmail = (session.user.email || '').trim().toLowerCase();
+    // Filter strictly by logged-in owner's email (primary owner identifier)
+    const { data: sData } = await supabase
+      .from('qr_stands')
+      .select('*')
+      .ilike('owner_email', userEmail)
+      .order('created_at', { ascending: false });
+
+    const ownerStands = sData || [];
+    setStands(ownerStands);
+
+    if (ownerStands.length > 0) {
+      const standIds = ownerStands.map((s) => s.id);
+      const { data: lData } = await supabase
+        .from('feedback_logs')
+        .select('*')
+        .in('stand_id', standIds)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setLogs(lData || []);
+    } else {
+      setLogs([]);
+    }
   };
 
-  useEffect(() => { loadOwnerData(); }, []);
+  useEffect(() => { loadOwnerData(); }, [session]);
 
   const getDaysLeft = (isoDate) => {
     const diff = new Date(isoDate).getTime() - Date.now();
@@ -1014,19 +1038,23 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
     ? stands
     : stands.filter((s) => s.bundle_name === activeBundleFilter);
 
+  const selectedPlanObj = SUBSCRIPTION_PLANS.find((p) => p.id === selectedPlanId) || SUBSCRIPTION_PLANS[0];
+
   const submitIndividualPayment = async () => {
     if (!payStand) return;
     await supabase
       .from('qr_stands')
       .update({
+        plan_type: selectedPlanObj.id,
+        plan_amount: selectedPlanObj.price,
         payment_method: selectedPayMethod,
         payment_status: selectedPayMethod === 'CASH' ? 'CASH_PENDING_COLLECTION' : 'UPI_PENDING_VERIFY',
       })
       .eq('id', payStand.id);
     setPayNotice(
       selectedPayMethod === 'CASH'
-        ? `Cash payment request recorded for ${payStand.stand_slug}. Our representative will collect cash and extend validity.`
-        : `UPI payment marked for ${payStand.stand_slug}. Admin will confirm receipt shortly.`
+        ? `Cash renewal request (${selectedPlanObj.label} — ₹${selectedPlanObj.price}) recorded for ${payStand.stand_slug}.`
+        : `UPI renewal (${selectedPlanObj.label} — ₹${selectedPlanObj.price}) submitted for ${payStand.stand_slug}.`
     );
     setPayStand(null);
     loadOwnerData();
@@ -1055,7 +1083,7 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
     });
     if (error) {
       setCancelBusy(false);
-      setCancelError('Invalid or expired 8-digit OTP code.');
+      setCancelError('Invalid or expired 8-digit OTP PIN.');
       return;
     }
 
@@ -1074,17 +1102,13 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold">Shop Owner Dashboard</h1>
-          <p className="text-xs text-slate-500">
-            {profile.full_name ? `${profile.full_name} • ` : ''}{session.user.email} • {stands.length} Active QR/NFC Stand(s)
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-extrabold">Shop Owner Dashboard</h1>
+        <p className="text-xs text-slate-500">
+          {profile.full_name ? `${profile.full_name} • ` : ''}{session.user.email} • {stands.length} Assigned QR/NFC Stand(s)
+        </p>
       </div>
 
-      {/* 1-Week (7-Day) Renewal Reminder Banner */}
       {expiringSoonStands.length > 0 && (
         <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -1095,10 +1119,10 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
             </div>
           </div>
           <button
-            onClick={() => setPayStand(expiringSoonStands[0])}
+            onClick={() => { setPayStand(expiringSoonStands[0]); setSelectedPlanId('PLAN_3M'); setSelectedPayMethod('CASH'); }}
             className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold"
           >
-            Renew Now (Cash / UPI)
+            Renew Now (3 / 6 / 12 Months)
           </button>
         </div>
       )}
@@ -1110,7 +1134,6 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
         </div>
       )}
 
-      {/* Multi-Stand Bundle Filter Bar (Shown when owner has bundled stands) */}
       {bundleNames.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold text-slate-500 flex items-center gap-1"><Layers className="w-3.5 h-3.5" /> QR Bundles:</span>
@@ -1132,18 +1155,18 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
         </div>
       )}
 
-      {/* All Owner Stands Grid with Individual Pay, Time Left & OTP Cancel */}
       <div className="space-y-3">
         <h2 className="font-bold text-lg">Your QR & NFC Stands ({visibleStands.length})</h2>
         {visibleStands.length === 0 ? (
           <div className="p-8 rounded-2xl bg-white border border-slate-200 text-center text-sm text-slate-500">
-            No stands assigned to <strong>{session.user.email}</strong> yet. Contact support@feedbackpulse101.in to activate your stand.
+            No QR stands are linked to <strong>{session.user.email}</strong> yet. Contact support@feedbackpulse101.in to link your stand.
           </div>
         ) : (
           <div className="grid md:grid-cols-2 gap-5">
             {visibleStands.map((s) => {
               const daysLeft = getDaysLeft(s.subscription_expires_at);
               const shareUrl = `${window.location.origin}/r/${s.stand_slug}`;
+              const currentPlan = SUBSCRIPTION_PLANS.find((p) => p.id === s.plan_type) || SUBSCRIPTION_PLANS[0];
               return (
                 <div key={s.id} className={darkMode ? 'p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4' : 'p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4'}>
                   <div className="flex items-start justify-between gap-2">
@@ -1154,6 +1177,9 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5">
                         Placement: <strong>{s.location_label || 'Main Counter'}</strong> • Serial: <span className="font-mono font-bold text-indigo-600">{s.stand_slug}</span>
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Current Plan: <strong>{currentPlan.label} (₹{s.plan_amount || currentPlan.price})</strong> • Status: <strong>{s.payment_status}</strong>
                       </p>
                       {s.bundle_name && (
                         <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700">
@@ -1169,7 +1195,6 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
                     </span>
                   </div>
 
-                  {/* Quick Copy / Preview URL */}
                   <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600">
                     <span className="truncate font-mono">{shareUrl}</span>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -1186,14 +1211,13 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
                     </div>
                   </div>
 
-                  {/* Individual Stand Subscription Button (Shows Time Left + Cash/UPI Pay) & OTP Cancel */}
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
                     <button
-                      onClick={() => { setPayStand(s); setSelectedPayMethod('CASH'); }}
+                      onClick={() => { setPayStand(s); setSelectedPlanId(s.plan_type || 'PLAN_3M'); setSelectedPayMethod('CASH'); }}
                       className="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-1.5"
                     >
                       <CreditCard className="w-3.5 h-3.5" />
-                      Pay / Renew ({daysLeft}d left)
+                      Plans & Pay ({daysLeft}d left)
                     </button>
 
                     {s.is_active && (
@@ -1221,8 +1245,8 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
             <div key={l.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${l.rating_score >= 8 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                    Score: {l.rating_score}/10
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${l.rating_score >= 7 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                    Score: {l.rating_score}/15
                   </span>
                   <span className="text-xs text-slate-400">{new Date(l.created_at).toLocaleString('en-IN')}</span>
                 </div>
@@ -1235,23 +1259,47 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
         </div>
       </div>
 
-      {/* MODAL 1: Individual Stand Cash / UPI Payment */}
+      {/* MODAL 1: 3 / 6 / 12-Month Plan Selection + Cash / UPI Payment */}
       {payStand && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white text-slate-900 max-w-md w-full rounded-2xl p-6 space-y-4 shadow-xl">
+          <div className="bg-white text-slate-900 max-w-lg w-full rounded-2xl p-6 space-y-4 shadow-xl">
             <div className="flex justify-between items-center">
-              <h3 className="font-extrabold text-base">Renew Stand: {payStand.stand_slug}</h3>
+              <h3 className="font-extrabold text-base">Subscription Plans — {payStand.stand_slug}</h3>
               <button onClick={() => setPayStand(null)} className="p-1 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
             </div>
             <p className="text-xs text-slate-600">
-              Location: <strong>{payStand.location_label || 'Main'}</strong> • Time Left: <strong>{getDaysLeft(payStand.subscription_expires_at)} days</strong>. Select your preferred payment mode (₹149/month):
+              Location: <strong>{payStand.location_label || 'Main'}</strong> • Time Left: <strong>{getDaysLeft(payStand.subscription_expires_at)} days</strong>. Choose a validity plan:
             </p>
 
-            <div className="grid grid-cols-2 gap-3">
+            {/* 3-Month, 6-Month & 12-Month Plan Cards */}
+            <div className="grid grid-cols-3 gap-2.5">
+              {SUBSCRIPTION_PLANS.map((plan) => (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => setSelectedPlanId(plan.id)}
+                  className={`p-3 rounded-xl border text-left space-y-1 transition ${
+                    selectedPlanId === plan.id
+                      ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
+                      : 'border-slate-200 hover:border-indigo-300'
+                  }`}
+                >
+                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                    {plan.badge}
+                  </span>
+                  <div className="font-extrabold text-sm pt-0.5">{plan.label}</div>
+                  <div className="text-base font-extrabold text-indigo-600">₹{plan.price}</div>
+                  <div className="text-[10px] text-slate-500">₹{Math.round(plan.price / plan.months)}/mo</div>
+                </button>
+              ))}
+            </div>
+
+            {/* Cash or UPI Selector */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => setSelectedPayMethod('CASH')}
-                className={`p-4 rounded-xl border text-left space-y-1 ${selectedPayMethod === 'CASH' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200'}`}
+                className={`p-3.5 rounded-xl border text-left space-y-1 ${selectedPayMethod === 'CASH' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200'}`}
               >
                 <Banknote className="w-5 h-5 text-emerald-600" />
                 <div className="font-bold text-xs">Pay in Cash</div>
@@ -1261,7 +1309,7 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
               <button
                 type="button"
                 onClick={() => setSelectedPayMethod('UPI')}
-                className={`p-4 rounded-xl border text-left space-y-1 ${selectedPayMethod === 'UPI' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200'}`}
+                className={`p-3.5 rounded-xl border text-left space-y-1 ${selectedPayMethod === 'UPI' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200'}`}
               >
                 <Smartphone className="w-5 h-5 text-indigo-600" />
                 <div className="font-bold text-xs">Pay via UPI</div>
@@ -1272,7 +1320,7 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
             {selectedPayMethod === 'UPI' && (
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
                 {OWNER_UPI_ID
-                  ? <>Send ₹149 to UPI ID: <strong className="font-mono">{OWNER_UPI_ID}</strong> (Ref: {payStand.stand_slug}) and click Confirm below.</>
+                  ? <>Send <strong>₹{selectedPlanObj.price}</strong> ({selectedPlanObj.label}) to UPI ID: <strong className="font-mono">{OWNER_UPI_ID}</strong> (Ref: {payStand.stand_slug}) and click Confirm below.</>
                   : <>UPI handle will be updated shortly—you can select <strong>Pay in Cash</strong> right now for immediate collection.</>}
               </div>
             )}
@@ -1281,7 +1329,7 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
               onClick={submitIndividualPayment}
               className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm"
             >
-              Confirm {selectedPayMethod === 'CASH' ? 'Cash Payment' : 'UPI Payment'}
+              Confirm {selectedPlanObj.label} Plan (₹{selectedPlanObj.price}) via {selectedPayMethod}
             </button>
           </div>
         </div>
@@ -1296,7 +1344,7 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
               <button onClick={() => setCancelStand(null)} className="p-1 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
             </div>
             <p className="text-xs text-slate-600">
-              For your account security, cancelling a QR/NFC stand requires verifying an <strong>8-digit OTP code</strong> sent to <strong>{session.user.email}</strong>.
+              For your account security, cancelling a QR/NFC stand requires verifying an <strong>8-digit OTP PIN</strong> sent to <strong>{session.user.email}</strong>.
             </p>
 
             {cancelError && <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-medium">{cancelError}</div>}
@@ -1307,7 +1355,7 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
                 disabled={cancelBusy}
                 className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm disabled:opacity-60"
               >
-                {cancelBusy ? 'Sending OTP...' : 'Send Cancellation OTP to My Email'}
+                {cancelBusy ? 'Sending OTP PIN...' : 'Send Cancellation PIN to My Email'}
               </button>
             ) : (
               <form onSubmit={confirmCancelWithOtp} className="space-y-3">
@@ -1315,57 +1363,3 @@ function ShopOwnerDashboard({ session, profile, darkMode }) {
                   type="text"
                   required
                   maxLength={8}
-                  value={cancelOtpCode}
-                  onChange={(e) => setCancelOtpCode(e.target.value.replace(/\D/g, ''))}
-                  placeholder="Enter 8-digit OTP code"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-widest"
-                />
-                <button
-                  type="submit"
-                  disabled={cancelBusy || cancelOtpCode.length < 6}
-                  className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm disabled:opacity-60"
-                >
-                  {cancelBusy ? 'Verifying...' : 'Verify OTP & Cancel Stand'}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ==================== 6. LEGAL MODAL ==================== */
-function LegalModal({ type, onClose }) {
-  const content = {
-    terms: {
-      title: 'Terms & Conditions — FeedbackPulse101',
-      body: 'FeedbackPulse101 provides smart QR & NFC feedback routing software and stands for businesses in India. Users must be 18+ years of age. Merchants agree to comply with the Consumer Protection Act, 2019 and CCPA guidelines by never fabricating reviews or incentivizing positive ratings.',
-    },
-    privacy: {
-      title: 'Privacy Policy (DPDP Act, 2023 Compliant)',
-      body: 'FeedbackPulse101 collects business owner details and voluntary guest feedback. All data is encrypted in transit (HTTPS/SSL) and at rest, protected by Row-Level Security (RLS) on Supabase and Cloudflare infrastructure (which may process data in compliant global jurisdictions under Section 16 of the DPDP Act, 2023). Users may request access or erasure anytime.',
-    },
-    refund: {
-      title: 'Refund & Cancellation Policy',
-      body: 'Physical NFC/QR stands include a 90-day software trial and free replacement for transit damage. Ongoing subscriptions (₹149/mo per stand) can be cancelled anytime via OTP verification in the Owner Dashboard prior to the next billing cycle.',
-    },
-    contact: {
-      title: 'Contact & Grievance Officer',
-      body: 'Enterprise: FeedbackPulse101 (MSME Registered Enterprise, Bhopal / Raisen, Madhya Pradesh, India). Email: support@feedbackpulse101.in',
-    },
-  }[type];
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white text-slate-900 max-w-lg w-full rounded-2xl p-6 space-y-4 shadow-xl">
-        <div className="flex justify-between items-center">
-          <h3 className="font-extrabold text-base">{content.title}</h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
-        </div>
-        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{content.body}</p>
-      </div>
-    </div>
-  );
-}
