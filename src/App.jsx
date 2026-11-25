@@ -1074,3 +1074,543 @@ function SuperAdminDashboard({ session, darkMode }) {
             </div>
 
             <div className="grid sm:grid-cols-2 gap-3 text-xs">
+              <div className="sm:col-span-2">
+                <label className="block font-bold mb-1">Owner Email (Primary Key — Reassign Ownership)</label>
+                <input
+                  type="email"
+                  required
+                  value={editForm.owner_email}
+                  onChange={(e) => setEditForm({ ...editForm, owner_email: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold mb-1">Business Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.business_name}
+                  onChange={(e) => setEditForm({ ...editForm, business_name: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold mb-1">Stand Serial</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.stand_slug}
+                  onChange={(e) => setEditForm({ ...editForm, stand_slug: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono uppercase"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold mb-1">Placement / Floor</label>
+                <input
+                  type="text"
+                  value={editForm.location_label}
+                  onChange={(e) => setEditForm({ ...editForm, location_label: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold mb-1">Bundle Name (Optional)</label>
+                <input
+                  type="text"
+                  value={editForm.bundle_name}
+                  onChange={(e) => setEditForm({ ...editForm, bundle_name: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block font-bold mb-1">Google Place ID or Review Link</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.google_review_url}
+                  onChange={(e) => setEditForm({ ...editForm, google_review_url: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold mb-1">Plan</label>
+                <select
+                  value={editForm.plan_type}
+                  onChange={(e) => setEditForm({ ...editForm, plan_type: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm"
+                >
+                  {SUBSCRIPTION_PLANS.map((p) => (
+                    <option key={p.id} value={p.id}>{p.label} — ₹{p.price}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center pt-5">
+                <label className="flex items-center gap-2 cursor-pointer font-bold">
+                  <input
+                    type="checkbox"
+                    checked={editForm.is_active}
+                    onChange={(e) => setEditForm({ ...editForm, is_active: e.target.checked })}
+                    className="rounded text-indigo-600"
+                  />
+                  Stand Active
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setEditStand(null)} className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-semibold">
+                Cancel
+              </button>
+              <button type="submit" className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">
+                Save & Reassign QR
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ==================== 5. SHOP OWNER DASHBOARD ==================== */
+function ShopOwnerDashboard({ session, profile, darkMode }) {
+  const [stands, setStands] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const [activeBundleFilter, setActiveBundleFilter] = useState('ALL');
+  const [copiedId, setCopiedId] = useState('');
+
+  const [payStand, setPayStand] = useState(null);
+  const [selectedPlanId, setSelectedPlanId] = useState('PLAN_3M');
+  const [selectedPayMethod, setSelectedPayMethod] = useState('CASH');
+  const [payNotice, setPayNotice] = useState('');
+
+  const [cancelStand, setCancelStand] = useState(null);
+  const [cancelOtpSent, setCancelOtpSent] = useState(false);
+  const [cancelOtpCode, setCancelOtpCode] = useState('');
+  const [cancelError, setCancelError] = useState('');
+  const [cancelBusy, setCancelBusy] = useState(false);
+
+  const loadOwnerData = async () => {
+    const userEmail = (session.user.email || '').trim().toLowerCase();
+    const { data: sData } = await supabase
+      .from('qr_stands')
+      .select('*')
+      .ilike('owner_email', userEmail)
+      .order('created_at', { ascending: false });
+
+    const ownerStands = (sData || []).filter(
+      (s) => (s.owner_email || '').trim().toLowerCase() === userEmail
+    );
+    setStands(ownerStands);
+
+    if (ownerStands.length > 0) {
+      const standIds = ownerStands.map((s) => s.id);
+      const { data: lData } = await supabase
+        .from('feedback_logs')
+        .select('*')
+        .in('stand_id', standIds)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setLogs(lData || []);
+    } else {
+      setLogs([]);
+    }
+  };
+
+  useEffect(() => { loadOwnerData(); }, [session]);
+
+  const getDaysLeft = (isoDate) => {
+    const diff = new Date(isoDate).getTime() - Date.now();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  };
+
+  const expiringSoonStands = stands.filter((s) => s.is_active && getDaysLeft(s.subscription_expires_at) <= 7);
+  const bundleNames = Array.from(new Set(stands.map((s) => s.bundle_name).filter(Boolean)));
+  const visibleStands = activeBundleFilter === 'ALL'
+    ? stands
+    : stands.filter((s) => s.bundle_name === activeBundleFilter);
+
+  const selectedPlanObj = SUBSCRIPTION_PLANS.find((p) => p.id === selectedPlanId) || SUBSCRIPTION_PLANS[0];
+
+  const submitIndividualPayment = async () => {
+    if (!payStand) return;
+    await supabase
+      .from('qr_stands')
+      .update({
+        plan_type: selectedPlanObj.id,
+        plan_amount: selectedPlanObj.price,
+        payment_method: selectedPayMethod,
+        payment_status: selectedPayMethod === 'CASH' ? 'CASH_PENDING_COLLECTION' : 'UPI_PENDING_VERIFY',
+      })
+      .eq('id', payStand.id);
+    setPayNotice(
+      selectedPayMethod === 'CASH'
+        ? `Cash renewal request (${selectedPlanObj.label} — ₹${selectedPlanObj.price}) recorded for ${payStand.stand_slug}.`
+        : `UPI renewal (${selectedPlanObj.label} — ₹${selectedPlanObj.price}) submitted for ${payStand.stand_slug}.`
+    );
+    setPayStand(null);
+    loadOwnerData();
+  };
+
+  const initiateCancelOtp = async () => {
+    setCancelError('');
+    setCancelBusy(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: session.user.email,
+      options: { shouldCreateUser: false },
+    });
+    setCancelBusy(false);
+    if (error) setCancelError(error.message);
+    else setCancelOtpSent(true);
+  };
+
+  const confirmCancelWithOtp = async (e) => {
+    e.preventDefault();
+    setCancelError('');
+    setCancelBusy(true);
+    const { error } = await supabase.auth.verifyOtp({
+      email: session.user.email,
+      token: cancelOtpCode.trim(),
+      type: 'email',
+    });
+    if (error) {
+      setCancelBusy(false);
+      setCancelError('Invalid or expired 8-digit OTP PIN.');
+      return;
+    }
+
+    await supabase
+      .from('qr_stands')
+      .update({ is_active: false, payment_status: 'CANCELLED' })
+      .eq('id', cancelStand.id);
+
+    setCancelBusy(false);
+    setCancelStand(null);
+    setCancelOtpSent(false);
+    setCancelOtpCode('');
+    setPayNotice(`Subscription for stand ${cancelStand.stand_slug} has been cancelled after OTP verification.`);
+    loadOwnerData();
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <div>
+        <h1 className="text-2xl font-extrabold">Shop Owner Dashboard</h1>
+        <p className="text-xs text-slate-500">
+          {profile.full_name ? `${profile.full_name} • ` : ''}{session.user.email} • {stands.length} Assigned QR/NFC Stand(s)
+        </p>
+      </div>
+
+      {expiringSoonStands.length > 0 && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+            <div className="text-xs sm:text-sm">
+              <strong>Subscription Renewal Reminder (Within 7 Days):</strong>{' '}
+              {expiringSoonStands.map((s) => `${s.stand_slug} (${getDaysLeft(s.subscription_expires_at)}d left)`).join(', ')}.
+            </div>
+          </div>
+          <button
+            onClick={() => { setPayStand(expiringSoonStands[0]); setSelectedPlanId('PLAN_3M'); setSelectedPayMethod('CASH'); }}
+            className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold"
+          >
+            Renew Now (3 / 6 / 12 Months)
+          </button>
+        </div>
+      )}
+
+      {payNotice && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex justify-between items-center">
+          <span>{payNotice}</span>
+          <button onClick={() => setPayNotice('')}><X className="w-4 h-4" /></button>
+        </div>
+      )}
+
+      {bundleNames.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-slate-500 flex items-center gap-1"><Layers className="w-3.5 h-3.5" /> QR Bundles:</span>
+          <button
+            onClick={() => setActiveBundleFilter('ALL')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${activeBundleFilter === 'ALL' ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-700'}`}
+          >
+            All Stands ({stands.length})
+          </button>
+          {bundleNames.map((b) => (
+            <button
+              key={b}
+              onClick={() => setActiveBundleFilter(b)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold ${activeBundleFilter === b ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-200 text-slate-700'}`}
+            >
+              {b} ({stands.filter((s) => s.bundle_name === b).length})
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="space-y-3">
+        <h2 className="font-bold text-lg">Your QR & NFC Stands ({visibleStands.length})</h2>
+        {visibleStands.length === 0 ? (
+          <div className="p-8 rounded-2xl bg-white border border-slate-200 text-center text-sm text-slate-500">
+            No QR stands are linked to <strong>{session.user.email}</strong> yet. Contact support@feedbackpulse101.in to link your stand.
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-5">
+            {visibleStands.map((s) => {
+              const daysLeft = getDaysLeft(s.subscription_expires_at);
+              const shareUrl = `${window.location.origin}/r/${s.stand_slug}`;
+              const currentPlan = SUBSCRIPTION_PLANS.find((p) => p.id === s.plan_type) || SUBSCRIPTION_PLANS[0];
+              return (
+                <div key={s.id} className={darkMode ? 'p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4' : 'p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4'}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-indigo-600" />
+                        <h3 className="font-extrabold text-base">{s.business_name}</h3>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Placement: <strong>{s.location_label || 'Main Counter'}</strong> • Serial: <span className="font-mono font-bold text-indigo-600">{s.stand_slug}</span>
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Current Plan: <strong>{currentPlan.label} (₹{s.plan_amount || currentPlan.price})</strong> • Status: <strong>{s.payment_status}</strong>
+                      </p>
+                      {s.bundle_name && (
+                        <span className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                          <Layers className="w-3 h-3" /> Bundle: {s.bundle_name}
+                        </span>
+                      )}
+                    </div>
+
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                      !s.is_active ? 'bg-rose-50 text-rose-700' : daysLeft <= 7 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-50 text-emerald-700'
+                    }`}>
+                      {!s.is_active ? 'Cancelled' : `${daysLeft} days left`}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600">
+                    <span className="truncate font-mono">{shareUrl}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(shareUrl); setCopiedId(s.id); setTimeout(() => setCopiedId(''), 1500); }}
+                        className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700"
+                        title="Copy Link"
+                      >
+                        {copiedId === s.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                      <a href={shareUrl} target="_blank" rel="noreferrer" className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700" title="Open Stand">
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                    <button
+                      onClick={() => { setPayStand(s); setSelectedPlanId(s.plan_type || 'PLAN_3M'); setSelectedPayMethod('CASH'); }}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center justify-center gap-1.5"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      Plans & Pay ({daysLeft}d left)
+                    </button>
+
+                    {s.is_active && (
+                      <button
+                        onClick={() => { setCancelStand(s); setCancelOtpSent(false); setCancelOtpCode(''); setCancelError(''); }}
+                        className="py-2.5 px-3 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold"
+                      >
+                        Cancel Subscription
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Private Feedback Ledger */}
+      <div className="space-y-3">
+        <h2 className="font-bold text-lg">Customer Feedback Inbox ({logs.length})</h2>
+        <div className={darkMode ? 'rounded-2xl bg-slate-900 border border-slate-800 divide-y divide-slate-800' : 'rounded-2xl bg-white border border-slate-200 divide-y divide-slate-100 shadow-xs'}>
+          {logs.length === 0 && <p className="p-6 text-xs text-slate-500">No guest ratings recorded yet.</p>}
+          {logs.map((l) => (
+            <div key={l.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${l.rating_score >= 7 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                    Score: {l.rating_score}/15
+                  </span>
+                  <span className="text-xs text-slate-400">{new Date(l.created_at).toLocaleString('en-IN')}</span>
+                </div>
+                <p className="text-sm mt-1">{l.feedback_text || 'Rated without written note'}</p>
+                {l.customer_contact && <p className="text-xs text-indigo-600 font-medium mt-0.5">Guest Contact: {l.customer_contact}</p>}
+              </div>
+              <span className="text-xs font-semibold text-slate-500">{l.routed_to_google ? 'Routed to Google' : 'Private Resolution'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* MODAL 1: 3 / 6 / 12-Month Plan Selection + Cash / UPI Payment */}
+      {payStand && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white text-slate-900 max-w-lg w-full rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex justify-between items-center">
+              <h3 className="font-extrabold text-base">Subscription Plans — {payStand.stand_slug}</h3>
+              <button onClick={() => setPayStand(null)} className="p-1 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-xs text-slate-600">
+              Location: <strong>{payStand.location_label || 'Main'}</strong> • Time Left: <strong>{getDaysLeft(payStand.subscription_expires_at)} days</strong>. Choose a validity plan:
+            </p>
+
+            <div className="grid grid-cols-3 gap-2.5">
+              {SUBSCRIPTION_PLANS.map((plan) => (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => setSelectedPlanId(plan.id)}
+                  className={`p-3 rounded-xl border text-left space-y-1 transition ${
+                    selectedPlanId === plan.id
+                      ? 'border-indigo-600 bg-indigo-50 ring-1 ring-indigo-600'
+                      : 'border-slate-200 hover:border-indigo-300'
+                  }`}
+                >
+                  <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">
+                    {plan.badge}
+                  </span>
+                  <div className="font-extrabold text-sm pt-0.5">{plan.label}</div>
+                  <div className="text-base font-extrabold text-indigo-600">₹{plan.price}</div>
+                  <div className="text-[10px] text-slate-500">₹{Math.round(plan.price / plan.months)}/mo</div>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setSelectedPayMethod('CASH')}
+                className={`p-3.5 rounded-xl border text-left space-y-1 ${selectedPayMethod === 'CASH' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200'}`}
+              >
+                <Banknote className="w-5 h-5 text-emerald-600" />
+                <div className="font-bold text-xs">Pay in Cash</div>
+                <div className="text-[11px] text-slate-500">In-person cash collection</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedPayMethod('UPI')}
+                className={`p-3.5 rounded-xl border text-left space-y-1 ${selectedPayMethod === 'UPI' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200'}`}
+              >
+                <Smartphone className="w-5 h-5 text-indigo-600" />
+                <div className="font-bold text-xs">Pay via UPI</div>
+                <div className="text-[11px] text-slate-500">{OWNER_UPI_ID || 'Direct UPI transfer'}</div>
+              </button>
+            </div>
+
+            {selectedPayMethod === 'UPI' && (
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
+                {OWNER_UPI_ID
+                  ? <>Send <strong>₹{selectedPlanObj.price}</strong> ({selectedPlanObj.label}) to UPI ID: <strong className="font-mono">{OWNER_UPI_ID}</strong> (Ref: {payStand.stand_slug}) and click Confirm below.</>
+                  : <>UPI handle will be updated shortly—you can select <strong>Pay in Cash</strong> right now for immediate collection.</>}
+              </div>
+            )}
+
+            <button
+              onClick={submitIndividualPayment}
+              className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm"
+            >
+              Confirm {selectedPlanObj.label} Plan (₹{selectedPlanObj.price}) via {selectedPayMethod}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 2: OTP-Verified Subscription Cancellation */}
+      {cancelStand && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white text-slate-900 max-w-md w-full rounded-2xl p-6 space-y-4 shadow-xl">
+            <div className="flex justify-between items-center">
+              <h3 className="font-extrabold text-base text-rose-600">Cancel Subscription — {cancelStand.stand_slug}</h3>
+              <button onClick={() => setCancelStand(null)} className="p-1 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
+            </div>
+            <p className="text-xs text-slate-600">
+              For your account security, cancelling a QR/NFC stand requires verifying an <strong>8-digit OTP PIN</strong> sent to <strong>{session.user.email}</strong>.
+            </p>
+
+            {cancelError && <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-medium">{cancelError}</div>}
+
+            {!cancelOtpSent ? (
+              <button
+                onClick={initiateCancelOtp}
+                disabled={cancelBusy}
+                className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm disabled:opacity-60"
+              >
+                {cancelBusy ? 'Sending OTP PIN...' : 'Send Cancellation PIN to My Email'}
+              </button>
+            ) : (
+              <form onSubmit={confirmCancelWithOtp} className="space-y-3">
+                <input
+                  type="text"
+                  required
+                  maxLength={8}
+                  value={cancelOtpCode}
+                  onChange={(e) => setCancelOtpCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="Enter 8-digit OTP PIN"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-base tracking-widest"
+                />
+                <button
+                  type="submit"
+                  disabled={cancelBusy || cancelOtpCode.length < 6}
+                  className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm disabled:opacity-60"
+                >
+                  {cancelBusy ? 'Verifying...' : 'Verify PIN & Cancel Stand'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ==================== 6. LEGAL MODAL ==================== */
+function LegalModal({ type, onClose }) {
+  const content = {
+    terms: {
+      title: 'Terms & Conditions — FeedbackPulse101',
+      body: 'FeedbackPulse101 provides smart QR & NFC feedback routing software and stands for businesses in India. Users must be 18+ years of age. Merchants agree to comply with the Consumer Protection Act, 2019 and CCPA guidelines by never fabricating reviews or incentivizing positive ratings.',
+    },
+    privacy: {
+      title: 'Privacy Policy (DPDP Act, 2023 Compliant)',
+      body: 'FeedbackPulse101 collects business owner details and voluntary guest feedback. All data is encrypted in transit (HTTPS/SSL) and at rest, protected by Row-Level Security (RLS) on Supabase and Cloudflare infrastructure (which may process data in compliant global jurisdictions under Section 16 of the DPDP Act, 2023). Users may request access or erasure anytime.',
+    },
+    refund: {
+      title: 'Refund & Cancellation Policy',
+      body: 'Physical NFC/QR stands include a 90-day software trial and free replacement for transit damage. Ongoing subscriptions (3-Month ₹399, 6-Month ₹699, or 12-Month ₹1,199 per stand) can be cancelled anytime via OTP verification in the Owner Dashboard prior to the next billing cycle.',
+    },
+    contact: {
+      title: 'Contact & Grievance Officer',
+      body: 'Enterprise: FeedbackPulse101 (MSME Registered Enterprise, Bhopal / Raisen, Madhya Pradesh, India). Email: support@feedbackpulse101.in',
+    },
+  }[type];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white text-slate-900 max-w-lg w-full rounded-2xl p-6 space-y-4 shadow-xl">
+        <div className="flex justify-between items-center">
+          <h3 className="font-extrabold text-base">{content.title}</h3>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100"><X className="w-5 h-5" /></button>
+        </div>
+        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{content.body}</p>
+      </div>
+    </div>
+  );
+}
