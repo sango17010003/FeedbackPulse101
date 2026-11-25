@@ -542,6 +542,8 @@ function GuestRatingPage({ slug, queryOverride }) {
 function OwnerDashboard({ session }) {
   const [email, setEmail] = useState('');
   const [otpSent, setOtpSent] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [stands, setStands] = useState([]);
   const [logs, setLogs] = useState([]);
   const [newBiz, setNewBiz] = useState('');
@@ -561,11 +563,23 @@ function OwnerDashboard({ session }) {
 
   const sendMagicLink = async (e) => {
     e.preventDefault();
-    await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
-    });
-    setOtpSent(true);
+    setAuthError('');
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      });
+      if (error) {
+        setAuthError(error.message);
+      } else {
+        setOtpSent(true);
+      }
+    } catch (err) {
+      setAuthError(err.message || 'Failed to connect to Supabase. Check Cloudflare environment variables.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const createStand = async (e) => {
@@ -606,8 +620,17 @@ function OwnerDashboard({ session }) {
               placeholder="owner@yourshop.com"
               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm"
             />
-            <button type="submit" className="w-full py-2.5 rounded-xl bg-amber-600 text-white font-semibold text-sm">
-              Send Login Link
+            {authError && (
+              <div className="p-3 rounded-xl bg-rose-50 text-rose-700 text-xs font-medium">
+                {authError}
+              </div>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-2.5 rounded-xl bg-amber-600 text-white font-semibold text-sm disabled:opacity-60"
+            >
+              {loading ? 'Sending...' : 'Send Login Link'}
             </button>
           </form>
         )}
