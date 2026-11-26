@@ -9,7 +9,7 @@ import { supabase } from './supabaseClient';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 const ADMIN_EMAIL = 'sangosignature@gmail.com';
-const OWNER_UPI_ID = ''; // Add your UPI ID here when ready; defaults to Cash collection until added
+const OWNER_UPI_ID = '';
 
 const RESTAURANT_BG_URL =
   'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=2074&q=80';
@@ -20,18 +20,18 @@ const SUBSCRIPTION_PLANS = [
   { id: 'PLAN_12M', label: '12 Months', months: 12, days: 365, price: 1199, badge: 'Best Value' },
 ];
 
-// Permanent Dark Restaurant Frosted Glass Theme
+// High-Contrast Solid-Backed Dark Restaurant Frosted Glass Theme (Arbitrary opacity ensures 100% legibility)
 const THEME = {
-  card: 'rounded-3xl border border-white/20 bg-stone-950/82 backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.78)] text-white',
-  subCard: 'rounded-2xl border border-white/15 bg-stone-900/90 text-white',
+  card: 'rounded-3xl border border-white/25 bg-stone-950/[0.88] backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.85)] text-white',
+  subCard: 'rounded-2xl border border-white/15 bg-stone-900/[0.95] text-white',
   input: 'w-full px-3.5 py-2.5 rounded-xl border border-white/25 !bg-stone-900 !text-white placeholder-stone-400 text-sm focus:outline-none focus:border-amber-400',
   select: 'px-3 py-2 rounded-xl border border-white/25 !bg-stone-900 !text-white text-xs font-semibold',
-  muted: 'text-stone-300',
+  muted: 'text-stone-200',
   primaryBtn: 'bg-amber-400 hover:bg-amber-300 text-stone-950 font-extrabold shadow-lg transition',
   accentText: 'text-amber-300',
   dangerTitle: 'text-rose-300',
-  dangerBtn: 'border border-rose-400/40 bg-rose-500/25 hover:bg-rose-500/35 text-rose-200 font-bold',
-  badgePill: 'bg-amber-400/20 border border-amber-300/35 text-amber-200',
+  dangerBtn: 'border border-rose-400/50 bg-rose-600/30 hover:bg-rose-600/45 text-rose-100 font-bold',
+  badgePill: 'bg-amber-400/25 border border-amber-300/40 text-amber-200',
 };
 
 /* ==================== CLOUDFLARE TURNSTILE WIDGET ==================== */
@@ -130,11 +130,9 @@ export default function App() {
       }}
       className="min-h-screen flex flex-col bg-stone-950 text-white bg-cover bg-center bg-fixed relative selection:bg-amber-400 selection:text-stone-950"
     >
-      {/* Permanent Warm Dark Restaurant Vignette + Blur */}
-      <div className="fixed inset-0 bg-gradient-to-b from-stone-950/78 via-stone-900/68 to-black/82 backdrop-blur-[4px] pointer-events-none z-0" />
+      <div className="fixed inset-0 bg-gradient-to-b from-stone-950/[0.80] via-stone-950/[0.72] to-black/[0.86] backdrop-blur-[4px] pointer-events-none z-0" />
 
-      {/* Permanent Dark Glass Navbar */}
-      <header className="sticky top-0 z-40 border-b border-white/15 bg-stone-950/80 backdrop-blur-2xl text-white">
+      <header className="sticky top-0 z-40 border-b border-white/15 bg-stone-950/[0.88] backdrop-blur-2xl text-white">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <button onClick={() => navigate('home')} className="flex items-center gap-2.5 text-left">
             <div className="w-9 h-9 rounded-xl bg-amber-400 text-stone-950 flex items-center justify-center shadow-md">
@@ -206,7 +204,7 @@ export default function App() {
         </div>
       )}
 
-      <footer className="relative z-10 border-t border-white/15 bg-stone-950/80 backdrop-blur-2xl py-7 px-4 text-center text-xs text-stone-300 space-y-2.5">
+      <footer className="relative z-10 border-t border-white/15 bg-stone-950/[0.88] backdrop-blur-2xl py-7 px-4 text-center text-xs text-stone-200 space-y-2.5">
         <div className="flex flex-wrap justify-center gap-6 font-semibold">
           <button onClick={() => setLegalModal('terms')} className="hover:text-amber-300 transition">Terms &amp; Conditions</button>
           <button onClick={() => setLegalModal('privacy')} className="hover:text-amber-300 transition">Privacy Policy &amp; Sub-Processors (DPDP 2023)</button>
@@ -547,7 +545,7 @@ function GuestRatingPage({ slug }) {
                 className={`text-left p-3 rounded-2xl border text-xs transition ${
                   selectedPresetIdx === idx
                     ? 'border-amber-300 bg-amber-400/25 text-white font-semibold'
-                    : 'border-white/15 bg-stone-900/90 hover:border-amber-300/60 text-stone-100'
+                    : 'border-white/15 bg-stone-900/[0.95] hover:border-amber-300/60 text-stone-100'
                 }`}
               >
                 “{preset}”
@@ -602,7 +600,7 @@ function GuestRatingPage({ slug }) {
   );
 }
 
-/* ==================== 3. DASHBOARD ROUTER ==================== */
+/* ==================== 3. DASHBOARD ROUTER (SINGLE-LINE 8-DIGIT OTP + RE-LOGIN PERMISSION) ==================== */
 function DashboardRouter({ session, onOpenLegal, onGoHome }) {
   const [email, setEmail] = useState('');
   const [otpDigits, setOtpDigits] = useState(Array(8).fill(''));
@@ -619,6 +617,11 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
   const [parentOtpCode, setParentOtpCode] = useState('');
   const [parentOtpSent, setParentOtpSent] = useState(false);
   const [parentVerifiedAt, setParentVerifiedAt] = useState('');
+
+  // Re-login Access Request state for deleted accounts within 15-day recovery window
+  const [reloginNote, setReloginNote] = useState('');
+  const [reloginRequestSent, setReloginRequestSent] = useState(false);
+  const [reloginRequestBusy, setReloginRequestBusy] = useState(false);
 
   const inputRefs = useRef([]);
 
@@ -662,6 +665,16 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
         setProfile(created);
       } else {
         setProfile(data);
+        // Check if this deleted user already submitted a pending re-login request
+        if (data.account_status === 'PENDING_DELETION_15D') {
+          const { data: existingReq } = await supabase
+            .from('account_relogin_requests')
+            .select('id')
+            .ilike('owner_email', session.user.email)
+            .eq('status', 'PENDING_APPROVAL')
+            .maybeSingle();
+          if (existingReq) setReloginRequestSent(true);
+        }
       }
       setProfileLoading(false);
     };
@@ -831,6 +844,19 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     }
   };
 
+  const submitReloginPermissionRequest = async (e) => {
+    e.preventDefault();
+    setReloginRequestBusy(true);
+    await supabase.from('account_relogin_requests').insert({
+      user_id: session.user.id,
+      owner_email: session.user.email.trim().toLowerCase(),
+      payment_note: reloginNote.trim() || 'Requested service reactivation within 15-day recovery window',
+      status: 'PENDING_APPROVAL',
+    });
+    setReloginRequestBusy(false);
+    setReloginRequestSent(true);
+  };
+
   const acceptLegalTerms = async (e) => {
     e.preventDefault();
     if (!tickTermsAt || !tickPrivacyAt || !tickAgeAt) return;
@@ -869,7 +895,7 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     const joinedCode = otpDigits.join('');
     return (
       <div className="min-h-[calc(100vh-8rem)] w-full flex items-center justify-center px-4 py-12">
-        <div className={`w-full max-w-md p-7 sm:p-9 space-y-6 transition-all duration-500 ${THEME.card}`}>
+        <div className={`w-full max-w-md p-6 sm:p-8 space-y-6 transition-all duration-500 ${THEME.card}`}>
           {verifyStage === 'confirmed' ? (
             <div className="text-center space-y-5 py-2">
               <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-md">
@@ -1028,7 +1054,8 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
                 </div>
               )}
 
-              <div className="grid grid-cols-4 gap-2.5 max-w-[290px] mx-auto pt-1">
+              {/* SINGLE HORIZONTAL LINE OF 8 OTP BOXES */}
+              <div className="grid grid-cols-8 gap-1.5 sm:gap-2 w-full pt-1">
                 {otpDigits.map((digit, idx) => (
                   <input
                     key={idx}
@@ -1040,7 +1067,7 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
                     disabled={verifyStage === 'verifying' || verifyStage === 'verified'}
                     onChange={(e) => handleDigitChange(idx, e.target.value)}
                     onKeyDown={(e) => handleDigitKeyDown(idx, e)}
-                    className="h-14 rounded-2xl text-center font-mono text-xl font-extrabold border bg-stone-900 border-white/25 text-white focus:border-amber-300 focus:outline-none"
+                    className="h-12 sm:h-14 w-full rounded-xl text-center font-mono text-base sm:text-xl font-extrabold border bg-stone-900 border-white/30 text-white focus:border-amber-300 focus:outline-none"
                   />
                 ))}
               </div>
@@ -1113,7 +1140,7 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     return <div className="py-20 text-center text-sm text-white font-semibold">Verifying security profile...</div>;
   }
 
-  // BLOCK RE-LOGIN IF ACCOUNT IS IN 15-DAY DELETION GRACE PERIOD (UNTIL PAYMENT REACTIVATION)
+  // HIGH-CONTRAST DELETED ACCOUNT LOCK SCREEN + RE-LOGIN PERMISSION REQUEST (LOGGED IN account_relogin_requests)
   if (!profile.is_super_admin && profile.account_status === 'PENDING_DELETION_15D') {
     const deleteDateStr = profile.scheduled_delete_at
       ? new Date(profile.scheduled_delete_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -1126,15 +1153,39 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-extrabold text-white">Account Scheduled for Deletion</h2>
-            <p className={`text-xs leading-relaxed ${THEME.muted}`}>
-              Your account (<strong>{session.user.email}</strong>) is currently deactivated and scheduled for permanent deletion on{' '}
+            <p className="text-xs leading-relaxed text-stone-100">
+              Your account (<strong className="text-white">{session.user.email}</strong>) is currently deactivated and scheduled for permanent deletion on{' '}
               <strong className="text-amber-300">{deleteDateStr}</strong>.
             </p>
-            <p className={`text-xs leading-relaxed ${THEME.muted}`}>
-              Dashboard access is locked. To restore your QR stands and re-enable login within the 15-day recovery window, complete your subscription renewal payment with our team at{' '}
-              <strong className="text-white">support@feedbackpulse101.in</strong>.
+            <p className="text-xs leading-relaxed text-stone-200">
+              Dashboard access is locked. To restart your services within the 15-day recovery window, complete your renewal payment and request Super Admin access approval below:
             </p>
           </div>
+
+          {reloginRequestSent ? (
+            <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-200 text-xs font-bold">
+              Re-login access request recorded with timestamp! Super Admin will grant access &amp; restart your services once payment is verified.
+            </div>
+          ) : (
+            <form onSubmit={submitReloginPermissionRequest} className="space-y-2.5 text-left">
+              <input
+                type="text"
+                maxLength={140}
+                value={reloginNote}
+                onChange={(e) => setReloginNote(e.target.value)}
+                placeholder="Payment UTR / Cash Ref or Plan Note (optional)"
+                className={THEME.input}
+              />
+              <button
+                type="submit"
+                disabled={reloginRequestBusy}
+                className="w-full py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow"
+              >
+                {reloginRequestBusy ? 'Submitting Request...' : 'Request Re-Login Permission (Paid)'}
+              </button>
+            </form>
+          )}
+
           <button
             type="button"
             onClick={async () => {
@@ -1150,7 +1201,6 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     );
   }
 
-  // GRANULAR UNCHECKED CONSENT GATE
   if (!profile.terms_accepted_at || !profile.privacy_accepted_at || !profile.age_verified_at) {
     const allRequiredChecked = Boolean(tickTermsAt && tickPrivacyAt && tickAgeAt);
     return (
@@ -1256,11 +1306,12 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
   return <ShopOwnerDashboard session={session} profile={profile} onGoHome={onGoHome} />;
 }
 
-/* ==================== 4. SUPER ADMIN DASHBOARD (15-DAY RECOVERY + PERMANENT PURGE) ==================== */
+/* ==================== 4. SUPER ADMIN DASHBOARD (RE-LOGIN PERMISSION GRANT + 15D LEDGER) ==================== */
 function SuperAdminDashboard({ session }) {
   const [stands, setStands] = useState([]);
   const [incidents, setIncidents] = useState([]);
   const [deletedHistory, setDeletedHistory] = useState([]);
+  const [reloginRequests, setReloginRequests] = useState([]);
   const [ownerEmail, setOwnerEmail] = useState('');
   const [bizName, setBizName] = useState('');
   const [slug, setSlug] = useState('');
@@ -1286,7 +1337,6 @@ function SuperAdminDashboard({ session }) {
   });
 
   const loadAllStands = async () => {
-    // Run automatic 15-day expired deletion cleanup on Super Admin load
     await supabase.rpc('purge_expired_15d_deletions');
 
     const { data } = await supabase.from('qr_stands').select('*').order('created_at', { ascending: false });
@@ -1295,6 +1345,8 @@ function SuperAdminDashboard({ session }) {
     setIncidents(inc || []);
     const { data: delH } = await supabase.from('deleted_accounts_history').select('*').order('deleted_at', { ascending: false }).limit(25);
     setDeletedHistory(delH || []);
+    const { data: relReqs } = await supabase.from('account_relogin_requests').select('*').order('requested_at', { ascending: false }).limit(25);
+    setReloginRequests(relReqs || []);
   };
 
   useEffect(() => { loadAllStands(); }, []);
@@ -1302,6 +1354,15 @@ function SuperAdminDashboard({ session }) {
   const resolveIncident = async (id) => {
     await supabase.from('security_incidents').update({ resolved: true }).eq('id', id);
     loadAllStands();
+  };
+
+  const handleGrantReloginAccess = async (reqId, emailAddr) => {
+    const { error } = await supabase.rpc('grant_relogin_access', { p_request_id: reqId });
+    if (error) setMsg(`Grant access error: ${error.message}`);
+    else {
+      setMsg(`Access granted & services restarted for ${emailAddr}!`);
+      loadAllStands();
+    }
   };
 
   const restoreOwnerAccount = async (historyId, emailAddr) => {
@@ -1457,7 +1518,7 @@ function SuperAdminDashboard({ session }) {
           Super Admin Console
         </span>
         <h1 className="text-2xl sm:text-3xl font-extrabold mt-2 text-white">Stand Assignment, Reassignment, Bundles &amp; Approvals</h1>
-        <p className={`text-xs mt-1 ${THEME.muted}`}>Full platform control • 15-day account recovery &amp; auto-purge active</p>
+        <p className={`text-xs mt-1 ${THEME.muted}`}>Full platform control • Re-login permission approval &amp; 15-day auto-purge active</p>
       </div>
 
       {msg && (
@@ -1465,6 +1526,42 @@ function SuperAdminDashboard({ session }) {
           {msg}
         </div>
       )}
+
+      {/* Re-Login Access Requests from Deleted Accounts (account_relogin_requests) */}
+      <div className="space-y-3">
+        <h2 className="font-bold text-lg text-white drop-shadow">Re-Login Permission Requests ({reloginRequests.length})</h2>
+        <div className={`divide-y divide-white/15 ${THEME.card}`}>
+          {reloginRequests.length === 0 && (
+            <p className={`p-5 text-xs ${THEME.muted}`}>No deleted-account re-login requests yet.</p>
+          )}
+          {reloginRequests.map((req) => (
+            <div key={req.id} className="p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="space-y-0.5">
+                <div className="text-white font-bold">
+                  {req.owner_email} •{' '}
+                  <span className={req.status === 'PENDING_APPROVAL' ? 'text-amber-300' : 'text-emerald-300'}>
+                    {req.status}
+                  </span>
+                </div>
+                <div className={THEME.muted}>
+                  Note: {req.payment_note || '—'} • Requested: <strong>{new Date(req.requested_at).toLocaleString('en-IN')}</strong>
+                  {req.approved_at && <> • Approved: <strong>{new Date(req.approved_at).toLocaleString('en-IN')}</strong></>}
+                </div>
+              </div>
+
+              {req.status === 'PENDING_APPROVAL' && (
+                <button
+                  type="button"
+                  onClick={() => handleGrantReloginAccess(req.id, req.owner_email)}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold inline-flex items-center gap-1.5 shadow"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" /> Grant Access &amp; Restart Services
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <form onSubmit={assignNewStand} className={`p-6 space-y-4 ${THEME.card}`}>
         <h2 className="font-bold text-base flex items-center gap-2 text-white">
@@ -1579,7 +1676,7 @@ function SuperAdminDashboard({ session }) {
 
       {/* 15-Day Deletion & Payment Recovery Ledger */}
       <div className="space-y-3">
-        <h2 className="font-bold text-lg text-white drop-shadow">15-Day Account Deletion &amp; Payment Recovery Ledger ({deletedHistory.length})</h2>
+        <h2 className="font-bold text-lg text-white drop-shadow">15-Day Account Deletion Ledger ({deletedHistory.length})</h2>
         <div className={`divide-y divide-white/15 ${THEME.card}`}>
           {deletedHistory.length === 0 && (
             <p className={`p-5 text-xs ${THEME.muted}`}>No account deletion requests recorded yet.</p>
@@ -1605,7 +1702,7 @@ function SuperAdminDashboard({ session }) {
                   onClick={() => restoreOwnerAccount(item.id, item.owner_email)}
                   className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold inline-flex items-center gap-1.5"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" /> Restore &amp; Reactivate (Paid)
+                  <RotateCcw className="w-3.5 h-3.5" /> Grant Access &amp; Restart (Paid)
                 </button>
               )}
             </div>
@@ -1673,7 +1770,7 @@ function SuperAdminDashboard({ session }) {
   );
 }
 
-/* ==================== 5. SHOP OWNER DASHBOARD (15-DAY DELETION + INSTANT LOGOUT) ==================== */
+/* ==================== 5. SHOP OWNER DASHBOARD ==================== */
 function ShopOwnerDashboard({ session, profile, onGoHome }) {
   const [stands, setStands] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -1786,7 +1883,6 @@ function ShopOwnerDashboard({ session, profile, onGoHome }) {
       return;
     }
 
-    // Immediately sign out user & redirect home; re-login stays blocked until payment within 15 days
     setStands([]);
     setLogs([]);
     setDelBusy(false);
@@ -2031,7 +2127,7 @@ function ShopOwnerDashboard({ session, profile, onGoHome }) {
       <div className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-bold text-lg text-white drop-shadow">Customer Feedback Inbox ({logs.length})</h2>
-          <span className="text-[11px] text-stone-300 font-medium">Auto-retention policy: non-essential feedback auto-purges after 365 days</span>
+          <span className="text-[11px] text-stone-200 font-medium">Auto-retention policy: non-essential feedback auto-purges after 365 days</span>
         </div>
         <div className={`divide-y divide-white/15 ${THEME.card}`}>
           {logs.length === 0 && <p className={`p-6 text-xs ${THEME.muted}`}>No guest ratings recorded yet.</p>}
@@ -2220,7 +2316,7 @@ function LegalModal({ type, onClose }) {
           <div className={`text-xs sm:text-sm space-y-3 leading-relaxed ${THEME.muted}`}>
             <p><strong className="text-white">1. Data Minimization &amp; Zero Ad Trackers:</strong> We collect only strictly required business owner credentials (email, name, stand configuration) and voluntary guest survey ratings. Zero advertising or behavioral tracking cookies are used.</p>
             <p><strong className="text-white">2. Granular Consent &amp; Timestamps:</strong> All consents (Terms, Privacy, Age/Parental Double-OTP, and separate optional Marketing) are unchecked by default and logged with exact ISO timestamps.</p>
-            <p><strong className="text-white">3. Account Deletion &amp; 15-Day Recovery Window:</strong> When an owner triggers OTP-verified account deletion, they are immediately signed out and dashboard access is locked. Accounts can only be restored after payment within <strong className="text-white">15 days</strong>; after 15 days, all data is permanently purged.</p>
+            <p><strong className="text-white">3. Account Deletion &amp; 15-Day Recovery Window:</strong> When an owner triggers OTP-verified account deletion, they are immediately signed out and dashboard access is locked. Accounts can only be restored after payment and Super Admin approval within <strong className="text-white">15 days</strong>; after 15 days, all data is permanently purged.</p>
             <p><strong className="text-white">4. Authorized Sub-Processors (DPDP Section 8(2) DPAs Executed):</strong></p>
             <ul className="list-disc pl-5 space-y-1">
               <li><strong className="text-white">Cloudflare, Inc.</strong> — CDN Hosting, DNS, SSL/TLS &amp; Turnstile Bot Protection (Global Edge)</li>
