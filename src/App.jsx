@@ -22,8 +22,8 @@ const SUBSCRIPTION_PLANS = [
 
 // High-Contrast Solid-Backed Dark Restaurant Frosted Glass Theme (Arbitrary opacity ensures 100% legibility)
 const THEME = {
-  card: 'rounded-3xl border border-white/25 bg-stone-950/[0.88] backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.85)] text-white',
-  subCard: 'rounded-2xl border border-white/15 bg-stone-900/[0.95] text-white',
+  card: 'rounded-3xl border border-white/25 bg-stone-950/90 backdrop-blur-2xl shadow-[0_25px_70px_rgba(0,0,0,0.88)] text-white',
+  subCard: 'rounded-2xl border border-white/15 bg-stone-900/95 text-white',
   input: 'w-full px-3.5 py-2.5 rounded-xl border border-white/25 !bg-stone-900 !text-white placeholder-stone-400 text-sm focus:outline-none focus:border-amber-400',
   select: 'px-3 py-2 rounded-xl border border-white/25 !bg-stone-900 !text-white text-xs font-semibold',
   muted: 'text-stone-200',
@@ -33,7 +33,7 @@ const THEME = {
   dangerBtn: 'border border-rose-400/50 bg-rose-600/30 hover:bg-rose-600/45 text-rose-100 font-bold',
   badgePill: 'bg-amber-400/25 border border-amber-300/40 text-amber-200',
 };
-
+  
 /* ==================== CLOUDFLARE TURNSTILE WIDGET ==================== */
 function TurnstileWidget({ onVerify }) {
   const containerRef = useRef(null);
