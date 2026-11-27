@@ -1925,10 +1925,12 @@ function ShopOwnerDashboard({ session, profile, onGoHome }) {
     onGoHome();
   };
 
-  const getDaysLeft = (isoDate) => {
-    const diff = new Date(isoDate).getTime() - Date.now();
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-  };
+const getDaysLeft = (isoDate) => {
+    if (!isoDate) return 0;
+    const targetTime = new Date(isoDate).getTime();
+    if (Number.isNaN(targetTime)) return 0;
+    return Math.max(0, Math.ceil((targetTime - Date.now()) / (1000 * 60 * 60 * 24)));
+  };  
 
   const expiringSoonStands = stands.filter((s) => s.is_active && getDaysLeft(s.subscription_expires_at) <= 7);
   const bundleNames = Array.from(new Set(stands.map((s) => s.bundle_name).filter(Boolean)));
