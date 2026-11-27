@@ -32,7 +32,7 @@ const THEME = {
   dangerBtn: 'border border-rose-400/50 bg-rose-600/30 hover:bg-rose-600/45 text-rose-100 font-bold',
   badgePill: 'bg-amber-400/25 border border-amber-300/40 text-amber-200',
 };
-  
+
 /* ==================== CLOUDFLARE TURNSTILE WIDGET ==================== */
 function TurnstileWidget({ onVerify }) {
   const containerRef = useRef(null);
@@ -117,7 +117,7 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'global' });
     navigate('home');
   };
 
@@ -151,7 +151,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={handleLogout}
-                  title="Sign Out"
+                  title="Sign Out All Devices"
                   className="p-2 rounded-xl border border-white/25 bg-stone-900 text-white hover:bg-stone-800"
                 >
                   <LogOut className="w-4 h-4" />
@@ -641,6 +641,14 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     return () => clearInterval(t);
   }, [resendTimer]);
 
+  const checkServerAdminStatus = async () => {
+    try {
+      const { data: rpcAdmin, error } = await supabase.rpc('is_current_user_admin');
+      if (!error) return Boolean(rpcAdmin);
+    } catch {}
+    return false;
+  };
+
   useEffect(() => {
     if (!session) {
       setProfile(null);
@@ -654,18 +662,20 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
         .eq('id', session.user.id)
         .maybeSingle();
 
+      const serverIsAdmin = await checkServerAdminStatus();
+
       if (!data) {
-        const isSuper = session.user.email?.toLowerCase() === ADMIN_EMAIL;
         const { data: created } = await supabase
           .from('owner_profiles')
-          .upsert({ id: session.user.id, email: session.user.email, is_super_admin: isSuper })
+          .upsert({ id: session.user.id, email: session.user.email, is_super_admin: serverIsAdmin })
           .select()
           .single();
-        setProfile(created);
+        setProfile(created ? { ...created, is_super_admin: Boolean(created.is_super_admin || serverIsAdmin) } : null);
       } else {
-        setProfile(data);
+        const resolvedProfile = { ...data, is_super_admin: Boolean(data.is_super_admin || serverIsAdmin) };
+        setProfile(resolvedProfile);
         // Check if this deleted user already submitted a pending re-login request
-        if (data.account_status === 'PENDING_DELETION_15D') {
+        if (resolvedProfile.account_status === 'PENDING_DELETION_15D') {
           const { data: existingReq } = await supabase
             .from('account_relogin_requests')
             .select('id')
@@ -686,6 +696,39 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     return `${user.slice(0, 2)}***@${domain}`;
   };
 
+  // Server-first OTP dispatch (checks /api/auth-gate first, falls back to Supabase client if route not deployed)
+  const requestOtpViaServerGate = async (targetEmail) => {
+    const cleanTarget = targetEmail.trim().toLowerCase();
+    const redirectUrl = `${window.location.origin}/dashboard`;
+
+    try {
+      const gateRes = await fetch('/api/auth-gate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanTarget,
+          turnstileToken: captchaToken,
+          redirectTo: redirectUrl,
+        }),
+      });
+      if (gateRes.status !== 404 && gateRes.status !== 405) {
+        const gateData = await gateRes.json().catch(() => ({}));
+        if (!gateRes.ok) {
+          return { error: { message: gateData.error || gateData.msg || 'Server verification failed.' } };
+        }
+        return { error: null };
+      }
+    } catch {}
+
+    return supabase.auth.signInWithOtp({
+      email: cleanTarget,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: redirectUrl,
+      },
+    });
+  };
+
   const sendOtp = async (e) => {
     if (e) e.preventDefault();
     if (resendTimer > 0) return;
@@ -703,13 +746,7 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     setAuthError('');
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
+    const { error } = await requestOtpViaServerGate(email);
 
     if (error) {
       setLoading(false);
@@ -722,13 +759,7 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     }
 
     if (isUnder18Login && parentEmail.trim()) {
-      const { error: parentErr } = await supabase.auth.signInWithOtp({
-        email: parentEmail.trim().toLowerCase(),
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
+      const { error: parentErr } = await requestOtpViaServerGate(parentEmail);
       if (parentErr) {
         setLoading(false);
         setAuthError(`Parent OTP error: ${parentErr.message}`);
@@ -861,13 +892,15 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     if (!tickTermsAt || !tickPrivacyAt || !tickAgeAt) return;
     setLoading(true);
 
+    const serverIsAdmin = await checkServerAdminStatus();
+
     const { data, error } = await supabase
       .from('owner_profiles')
       .upsert({
         id: session.user.id,
         email: session.user.email,
         full_name: ownerFullName.trim() || null,
-        is_super_admin: session.user.email?.toLowerCase() === ADMIN_EMAIL,
+        is_super_admin: Boolean(profile?.is_super_admin || serverIsAdmin),
         terms_accepted_at: tickTermsAt,
         privacy_accepted_at: tickPrivacyAt,
         age_verified_at: tickAgeAt,
@@ -887,7 +920,9 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
     await supabase.from('consent_audit_logs').insert(auditRows);
 
     setLoading(false);
-    if (!error && data) setProfile(data);
+    if (!error && data) {
+      setProfile({ ...data, is_super_admin: Boolean(data.is_super_admin || serverIsAdmin) });
+    }
   };
 
   if (!session || verifyStage === 'verified' || verifyStage === 'confirmed') {
@@ -1188,7 +1223,7 @@ function DashboardRouter({ session, onOpenLegal, onGoHome }) {
           <button
             type="button"
             onClick={async () => {
-              await supabase.auth.signOut();
+              await supabase.auth.signOut({ scope: 'global' });
               onGoHome();
             }}
             className={`w-full py-3 rounded-2xl text-sm ${THEME.primaryBtn}`}
@@ -1886,7 +1921,7 @@ function ShopOwnerDashboard({ session, profile, onGoHome }) {
     setLogs([]);
     setDelBusy(false);
     setDeleteAllModal(false);
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'global' });
     onGoHome();
   };
 
