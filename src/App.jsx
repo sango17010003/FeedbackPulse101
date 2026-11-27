@@ -8,7 +8,6 @@ import {
 import { supabase } from './supabaseClient';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
-const ADMIN_EMAIL = 'sangosignature@gmail.com';
 const OWNER_UPI_ID = '';
 
 const RESTAURANT_BG_URL =
